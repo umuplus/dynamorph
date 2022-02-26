@@ -11,7 +11,7 @@ export function applyFormat(format: string, data: Record<string, any>): string {
     }, format)
 }
 
-export function generateRandomString(length: number): string {
+export function generateRandomString(length: number = 6): string {
     let result = ''
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     const charactersLength = characters.length
