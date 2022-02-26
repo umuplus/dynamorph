@@ -21,10 +21,10 @@ export class StringType extends BaseClass {
     private readonly relatedAttributes: string[]
     private _value: string | undefined = undefined
 
-    constructor(schema: StringAttribute, profileName?: string) {
+    constructor(schema?: StringAttribute, profileName?: string) {
         super(profileName)
 
-        this._schema = StringAttribute.parse(schema)
+        this._schema = StringAttribute.parse(schema || {})
         this.relatedAttributes = this._schema.format ? findRelatedAttributes(this._schema.format) : []
 
         Object.setPrototypeOf(this, StringType.prototype)

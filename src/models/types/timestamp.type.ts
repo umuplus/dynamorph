@@ -9,7 +9,7 @@ export type TimestampOn = z.infer<typeof TimestampOn>
 
 export const TimestampAttribute = Attribute.extend({
     on: TimestampOn,
-    type: Timestamp.default(Timestamp.Enum.ISO_STRING),
+    type: Timestamp,
 })
 export type TimestampAttribute = z.infer<typeof TimestampAttribute>
 

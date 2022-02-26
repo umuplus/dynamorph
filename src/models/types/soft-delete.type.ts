@@ -4,10 +4,10 @@ export class SoftDeleteType extends BaseClass {
     private readonly _schema: Attribute
     private _value: boolean | undefined = undefined
 
-    constructor(schema: Attribute, profileName?: string) {
+    constructor(schema?: Attribute, profileName?: string) {
         super(profileName)
 
-        this._schema = Attribute.parse(schema)
+        this._schema = Attribute.parse(schema || {})
 
         Object.setPrototypeOf(this, SoftDeleteType.prototype)
     }

@@ -6,7 +6,7 @@ export const Attribute = z.object({
     fieldName: z.string().min(1).optional(),
     partitionKey: z.boolean().optional(),
     sortKey: z.boolean().optional(),
-    keep: z.boolean().default(true).optional(),
+    ignore: z.boolean().optional(),
     required: z.boolean().optional(),
 })
 export type Attribute = z.infer<typeof Attribute>
