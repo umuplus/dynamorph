@@ -19,7 +19,6 @@ export const ModelConfiguration = z.object({
     tableName: z.string().min(1),
     schema: Schema.refine(
         (schema) => {
-            // TODO! move this to schemas below
             const partitionKeys = Object.keys(schema).filter((key) => schema[key].schema.partitionKey)
             return partitionKeys.length === 1
         },

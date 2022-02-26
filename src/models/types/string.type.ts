@@ -60,7 +60,7 @@ export class StringType extends BaseClass {
 
     validate(value: string): boolean {
         if (this._schema.format) {
-            const delimiter = this.options.delimiter
+            const delimiter = this._options.delimiter
             if (this._schema.format.split(delimiter).length !== value.split(delimiter).length) {
                 this._wrapError({ success: false, error: new Error('Format does not match') })
                 return false
