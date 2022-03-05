@@ -67,7 +67,24 @@ By default, it's undefined.
 - **regex :**
 This parameter enables regular expression support for the attribute.
 By default, it's disabled.
-- **type :**
+- **transform :**
+This parameter provides a function to transform the value.
+By default, it's undefined.
+
+### Number
+
+```typescript
+interface NumberType {
+    min?: number
+    max?: number
+    transform?: (input: number) => number
+}
+```
+
+- **min, max :**
+This parameter specifies minimum and maximum value for the attribute
+By default, it's undefined.
+- **transform :**
 This parameter provides a function to transform the value.
 By default, it's undefined.
 
