@@ -2,7 +2,6 @@ import { config, Options } from '../../utils/configuration'
 import { z, ZodError } from 'zod'
 
 export const Attribute = z.object({
-    // * if you set field name, its value will go to database instead of the actual property name
     fieldName: z.string().min(1).optional(),
     partitionKey: z.boolean().optional(),
     sortKey: z.boolean().optional(),
