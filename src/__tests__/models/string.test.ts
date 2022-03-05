@@ -19,6 +19,20 @@ test('advanced string attribute with fixed length', () => {
     expect(str.getValue()).toEqual('test')
 })
 
+test('cuid attribute', () => {
+    const str = new StringType({ type: 'cuid' })
+    const value = 'cjld2cjxh0000qzrmn831i7rn'
+    str.setValue(value)
+    expect(str.getValue()).toEqual(value)
+})
+
+test('uuid attribute', () => {
+    const str = new StringType({ type: 'uuid' })
+    const value = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
+    str.setValue(value)
+    expect(str.getValue()).toEqual(value)
+})
+
 test('email attribute', () => {
     const str = new StringType({ type: 'email' })
     const value = 'john@doe.com'
@@ -40,8 +54,14 @@ test('advanced string attribute with regex', () => {
     expect(str.getValue()).toEqual(value)
 })
 
-test('advanced string attribute with regex', () => {
+test('advanced string attribute with transform', () => {
     const str = new StringType({ transform: (value?: string) => value?.toUpperCase() || '' })
     str.setValue('test')
     expect(str.getValue()).toEqual('TEST')
+})
+
+test('advanced string attribute with format', () => {
+    const str = new StringType({ format: '{param1}#{param2}' })
+    str.applyFormat({ param1: 'abc', param2: 'def' })
+    expect(str.getValue()).toEqual('abc#def')
 })

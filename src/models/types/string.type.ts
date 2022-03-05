@@ -58,15 +58,7 @@ export class StringType extends BaseClass {
         return this._value
     }
 
-    validate(value: string): boolean {
-        if (this._schema.format) {
-            const delimiter = this._options.delimiter
-            if (this._schema.format.split(delimiter).length !== value.split(delimiter).length) {
-                this._wrapError({ success: false, error: new Error('Format does not match') })
-                return false
-            }
-        }
-
+    getZodModel() {
         let model = z.string()
         if (this._schema.type) {
             switch (this._schema.type) {
@@ -92,7 +84,19 @@ export class StringType extends BaseClass {
         if (this._schema.max) model = model.max(this._schema.max)
         if (this._schema.length) model = model.length(this._schema.length)
         if (this._schema.regex) model = model.regex(this._schema.regex)
+        return model
+    }
 
+    validate(value: string): boolean {
+        if (this._schema.format) {
+            const delimiter = this._options.delimiter
+            if (this._schema.format.split(delimiter).length !== value.split(delimiter).length) {
+                this._wrapError({ success: false, error: new Error('Format does not match') })
+                return false
+            }
+        }
+
+        const model = this.getZodModel()
         if (this._schema.required) this._wrapError(model.safeParse(value))
         else this._wrapError(model.optional().safeParse(value))
         return !this.hasErrors()
