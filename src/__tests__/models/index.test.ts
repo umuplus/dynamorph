@@ -23,9 +23,16 @@ test('basic model', () => {
 
             isDeleted: new SoftDeleteType({ fieldName: '_isd' }),
             deletedAt: new TimestampType({ on: TimestampOn.Values.DELETE, type: Timestamp.Values.ISO_STRING, fieldName: '_dat' }),
-        }
+        },
     })
-    expect(model.config.schema.part.schema.partitionKey).toEqual(true)
-    expect(model.config.schema.part.schema.fieldName).toEqual('pk')
-    expect(model.config.schema.userId.schema.ignore).toEqual(true)
+
+    const data = { userId: 'USER01', sort: 'SORT_KEY' }
+    const key = model.getKey(data)
+    const getCommand = model.getCommand(data)
+    expect(key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
+    expect(getCommand?.input.TableName).toEqual('MyUserTable')
+    expect(getCommand?.input.Key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
+
+    const getCommandWithProjection = model.getCommand(data, { ProjectionExpression: 'pk' })
+    expect(getCommandWithProjection?.input.ProjectionExpression).toEqual('pk')
 })

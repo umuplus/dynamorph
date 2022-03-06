@@ -111,7 +111,7 @@ This parameter specifies how many letters should the auto-generated token have?
 ### Timestamps
 
 This is a special type to provide auto-managed timestamp feature.
-The purpose of the feature is to set the attribute with correctly formatted-value on a specific action.
+The purpose of the feature is to set the attribute with correctly formatted date when a specific action occurred.
 
 ```typescript
 interface TimestampType {
