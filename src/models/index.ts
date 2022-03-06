@@ -1,5 +1,5 @@
 import { BaseClass } from './types/_'
-import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
+import { DeleteCommand, DeleteCommandInput, GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
 import { ModelConfiguration } from './types'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { SoftDeleteType } from './types/soft-delete.type'
@@ -75,5 +75,10 @@ export class Model extends BaseClass {
     getCommand(data: Data, customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand | undefined {
         const params = { TableName: this._config.tableName, Key: this.getKey(data) }
         return new GetCommand({ ...params, ...customize })
+    }
+
+    deleteCommand(data: Data, customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand | undefined {
+        const params = { TableName: this._config.tableName, Key: this.getKey(data) }
+        return new DeleteCommand({ ...params, ...customize })
     }
 }

@@ -6,7 +6,7 @@ import { UpdateTokenType } from '../../models/types/update-token.type'
 import { config } from '../../utils/configuration'
 
 test('basic model', () => {
-    config.update({ safe: false, delimiter: '|' })
+    config.update({ safe: false, delimiter: '#' })
     const model = new Model({
         modelName: 'User',
         tableName: 'MyUserTable',
@@ -28,11 +28,21 @@ test('basic model', () => {
 
     const data = { userId: 'USER01', sort: 'SORT_KEY' }
     const key = model.getKey(data)
-    const getCommand = model.getCommand(data)
     expect(key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
+
+    // * GetCommand
+    const getCommand = model.getCommand(data)
     expect(getCommand?.input.TableName).toEqual('MyUserTable')
     expect(getCommand?.input.Key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
 
-    const getCommandWithProjection = model.getCommand(data, { ProjectionExpression: 'pk' })
-    expect(getCommandWithProjection?.input.ProjectionExpression).toEqual('pk')
+    const getCommandCustom = model.getCommand(data, { ProjectionExpression: 'pk' })
+    expect(getCommandCustom?.input.ProjectionExpression).toEqual('pk')
+
+    // * DeleteCommand
+    const deleteCommand = model.deleteCommand(data)
+    expect(deleteCommand?.input.TableName).toEqual('MyUserTable')
+    expect(deleteCommand?.input.Key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
+
+    const deleteCommandCustom = model.deleteCommand(data, { ReturnConsumedCapacity: 'TOTAL' })
+    expect(deleteCommandCustom?.input.ReturnConsumedCapacity).toEqual('TOTAL')
 })

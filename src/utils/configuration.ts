@@ -25,8 +25,9 @@ export class Configuration {
 
     update(options: Options, name?: string): void {
         let index = this._settings.findIndex((s) => s.name === name)
-        if (index >= 0) this._settings[index] = { name, options: Options.parse(options) }
-        else this._settings.push({ name, options: Options.parse(options) })
+        const val = { name, options: Options.parse(options) }
+        if (index >= 0) this._settings[index] = val
+        else this._settings.push(val)
     }
 
     profile(name?: string): Options | undefined {
