@@ -14,8 +14,8 @@ export const TimestampAttribute = Attribute.extend({
 export type TimestampAttribute = z.infer<typeof TimestampAttribute>
 
 export class TimestampType extends BaseClass {
-    private readonly _schema: TimestampAttribute
-    private _value: Date = new Date()
+    protected readonly _schema: TimestampAttribute
+    protected _value: Date = new Date()
 
     constructor(schema: TimestampAttribute, profileName?: string) {
         super(profileName)

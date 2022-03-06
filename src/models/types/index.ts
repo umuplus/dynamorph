@@ -20,10 +20,11 @@ export const ModelConfiguration = z.object({
     schema: Schema.refine(
         (schema) => {
             const partitionKeys = Object.keys(schema).filter((key) => schema[key].schema.partitionKey)
-            return partitionKeys.length === 1
+            const sortKeys = Object.keys(schema).filter((key) => schema[key].schema.sortKey)
+            return partitionKeys.length === 1 && (!sortKeys.length || sortKeys.length === 1)
         },
         {
-            message: 'You must have one partition key.',
+            message: 'You can have only one partition key and one optional sort key.',
         },
     ),
 })

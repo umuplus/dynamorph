@@ -8,8 +8,8 @@ export const UpdateTokenAttribute = Attribute.extend({
 export type UpdateTokenAttribute = z.infer<typeof UpdateTokenAttribute>
 
 export class UpdateTokenType extends BaseClass {
-    private readonly _schema: UpdateTokenAttribute
-    private _value: string | undefined = undefined
+    protected readonly _schema: UpdateTokenAttribute
+    protected _value: string | undefined = undefined
 
     constructor(schema?: UpdateTokenAttribute, profileName?: string) {
         super(profileName)

@@ -9,8 +9,8 @@ export const NumberAttribute = Attribute.extend({
 export type NumberAttribute = z.infer<typeof NumberAttribute>
 
 export class NumberType extends BaseClass {
-    private readonly _schema: NumberAttribute
-    private _value: number | undefined = undefined
+    protected readonly _schema: NumberAttribute
+    protected _value: number | undefined = undefined
 
     constructor(schema?: NumberAttribute, profileName?: string) {
         super(profileName)

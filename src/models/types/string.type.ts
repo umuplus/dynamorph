@@ -17,21 +17,25 @@ export const StringAttribute = Attribute.extend({
 export type StringAttribute = z.infer<typeof StringAttribute>
 
 export class StringType extends BaseClass {
-    private readonly _schema: StringAttribute
-    private readonly relatedAttributes: string[]
-    private _value: string | undefined = undefined
+    protected readonly _schema: StringAttribute
+    protected readonly _relatedAttributes: string[]
+    protected _value: string | undefined = undefined
 
     constructor(schema?: StringAttribute, profileName?: string) {
         super(profileName)
 
         this._schema = StringAttribute.parse(schema || {})
-        this.relatedAttributes = this._schema.format ? findRelatedAttributes(this._schema.format) : []
+        this._relatedAttributes = this._schema.format ? findRelatedAttributes(this._schema.format) : []
 
         Object.setPrototypeOf(this, StringType.prototype)
     }
 
     get schema() {
         return this._schema
+    }
+
+    hasFormat() {
+        return !!this._relatedAttributes.length
     }
 
     setValue(value: string): boolean {
@@ -47,7 +51,7 @@ export class StringType extends BaseClass {
         const value = applyFormat(
             this._schema.format,
             Object.keys(data).reduce((final: Record<string, any>, field: string) => {
-                if (this.relatedAttributes.includes(field)) final[field] = data[field]
+                if (this._relatedAttributes.includes(field)) final[field] = data[field]
                 return final
             }, {}),
         )

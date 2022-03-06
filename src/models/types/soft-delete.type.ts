@@ -1,8 +1,8 @@
 import { Attribute, BaseClass } from './_'
 
 export class SoftDeleteType extends BaseClass {
-    private readonly _schema: Attribute
-    private _value: boolean | undefined = undefined
+    protected readonly _schema: Attribute
+    protected _value: boolean | undefined = undefined
 
     constructor(schema?: Attribute, profileName?: string) {
         super(profileName)
