@@ -1,5 +1,5 @@
 import { applyFormat, findRelatedAttributes } from '../../utils'
-import { Attribute, BaseClass } from './_'
+import { Attribute, BaseClass } from './'
 import { z } from 'zod'
 
 export const StringAttributeType = z.enum(['email', 'uuid', 'cuid', 'url']) // TODO? add more types such as ulid

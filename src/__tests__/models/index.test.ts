@@ -1,4 +1,4 @@
-import { Model } from '../../models'
+import { Dynamorph } from '../..'
 import { SoftDeleteType } from '../../models/types/soft-delete.type'
 import { StringType } from '../../models/types/string.type'
 import { Timestamp, TimestampOn, TimestampType } from '../../models/types/timestamp.type'
@@ -7,7 +7,7 @@ import { config } from '../../utils/configuration'
 
 test('basic model', () => {
     config.update({ safe: false, delimiter: '#' })
-    const model = new Model({
+    const model = new Dynamorph({
         modelName: 'User',
         tableName: 'MyUserTable',
         schema: {

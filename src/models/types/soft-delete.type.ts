@@ -1,4 +1,4 @@
-import { Attribute, BaseClass } from './_'
+import { Attribute, BaseClass } from './'
 
 export class SoftDeleteType extends BaseClass {
     protected readonly _schema: Attribute

@@ -1,31 +1,35 @@
-import { SoftDeleteType } from './soft-delete.type'
-import { StringType } from './string.type'
-import { TimestampType } from './timestamp.type'
-import { UpdateTokenType } from './update-token.type'
-import { z } from 'zod'
+import { config, Options } from '../../utils/configuration'
+import { z, ZodError } from 'zod'
 
-const AllTypesTogether = z.union([
-    z.instanceof(StringType),
-    z.instanceof(SoftDeleteType),
-    z.instanceof(TimestampType),
-    z.instanceof(UpdateTokenType),
-])
-export const Schema = z.record(AllTypesTogether)
-
-export type Schema = z.infer<typeof Schema>
-
-export const ModelConfiguration = z.object({
-    modelName: z.string().min(1),
-    tableName: z.string().min(1),
-    schema: Schema.refine(
-        (schema) => {
-            const partitionKeys = Object.keys(schema).filter((key) => schema[key].schema.partitionKey)
-            const sortKeys = Object.keys(schema).filter((key) => schema[key].schema.sortKey)
-            return partitionKeys.length === 1 && (!sortKeys.length || sortKeys.length === 1)
-        },
-        {
-            message: 'You can have only one partition key and one optional sort key.',
-        },
-    ),
+export const Attribute = z.object({
+    fieldName: z.string().min(1).optional(),
+    partitionKey: z.boolean().optional(),
+    sortKey: z.boolean().optional(),
+    ignore: z.boolean().optional(),
+    required: z.boolean().optional(),
 })
-export type ModelConfiguration = z.infer<typeof ModelConfiguration>
+export type Attribute = z.infer<typeof Attribute>
+
+export class BaseClass {
+    protected readonly _options: Options
+    protected _validationErrors: Array<ZodError | Error> = []
+
+    constructor(profileName?: string) {
+        this._options = config.profile(profileName)!
+    }
+
+    protected _wrapError(validation: { success: boolean; error?: ZodError | Error }) {
+        if (!validation.success) {
+            this._validationErrors.push(validation.error!)
+            if (!this._options.safe) throw this._validationErrors
+        }
+    }
+
+    hasErrors() {
+        return !!this._validationErrors.length
+    }
+
+    getErrors() {
+        return this._validationErrors
+    }
+}

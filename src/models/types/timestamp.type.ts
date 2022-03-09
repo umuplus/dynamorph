@@ -1,4 +1,4 @@
-import { Attribute, BaseClass } from './_'
+import { Attribute, BaseClass } from './'
 import { z } from 'zod'
 
 export const Timestamp = z.enum(['ISO_STRING', 'MILLISECONDS', 'SECONDS'])

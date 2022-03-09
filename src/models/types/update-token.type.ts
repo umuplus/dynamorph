@@ -1,4 +1,4 @@
-import { Attribute, BaseClass } from './_'
+import { Attribute, BaseClass } from './'
 import { z } from 'zod'
 import { generateRandomString } from '../../utils'
 
