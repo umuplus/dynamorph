@@ -12,17 +12,18 @@ export type Attribute = z.infer<typeof Attribute>
 
 export class BaseClass {
     protected readonly _options: Options
-    protected _validationErrors: Array<ZodError | Error> = []
+    protected _validationErrors: Array<ZodError> = []
 
     constructor(profileName?: string) {
         this._options = config.profile(profileName)!
     }
 
-    protected _wrapError(validation: { success: boolean; error?: ZodError | Error }) {
+    protected _wrapError(validation: { success: boolean; error?: ZodError }): boolean {
         if (!validation.success) {
             this._validationErrors.push(validation.error!)
             if (!this._options.safe) throw this._validationErrors
         }
+        return validation.success
     }
 
     hasErrors() {

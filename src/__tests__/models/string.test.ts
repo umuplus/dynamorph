@@ -62,6 +62,6 @@ test('advanced string attribute with transform', () => {
 
 test('advanced string attribute with format', () => {
     const str = new StringType({ format: '{param1}#{param2}' })
-    str.applyFormat({ param1: 'abc', param2: 'def' })
+    str.setValue({ param1: 'abc', param2: 'def' })
     expect(str.getValue()).toEqual('abc#def')
 })

@@ -27,8 +27,21 @@ test('basic model', () => {
     })
 
     const data = { userId: 'USER01', sort: 'SORT_KEY' }
-    const key = model.getKey(data)
+    const key = model.key(data)
     expect(key).toEqual({ pk: 'ID#USER01', sk: 'SORT_KEY' })
+
+    // * PutCommand
+    const putCommand = model.putCommand(data)
+    expect(putCommand?.input.TableName).toEqual('MyUserTable')
+    expect(putCommand?.input.Item?.pk).toEqual('ID#USER01')
+    expect(putCommand?.input.Item?.sk).toEqual('SORT_KEY')
+    expect(!!putCommand?.input.Item?._cat).toEqual(true)
+    expect(!isNaN(new Date(putCommand?.input.Item?._cat).getTime())).toEqual(true)
+    expect(putCommand?.input.Item?._isd).toEqual(false)
+    expect(putCommand?.input.Item?._token.length).toEqual(6)
+
+    const putCommandCustom = model.putCommand(data, { ConditionExpression: '#invalid = :invalid' })
+    expect(putCommandCustom?.input.ConditionExpression).toEqual('#invalid = :invalid')
 
     // * GetCommand
     const getCommand = model.getCommand(data)

@@ -1,6 +1,6 @@
 import { applyFormat, findRelatedAttributes } from '../../utils'
 import { Attribute, BaseClass } from './'
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 
 export const StringAttributeType = z.enum(['email', 'uuid', 'cuid', 'url']) // TODO? add more types such as ulid
 export type StringAttributeType = z.infer<typeof StringAttributeType>
@@ -38,15 +38,39 @@ export class StringType extends BaseClass {
         return !!this._relatedAttributes.length
     }
 
-    setValue(value: string): boolean {
-        return this._setValue(value)
+    setValue(value: string | Record<string, any>): boolean {
+        if (typeof value === 'string') {
+            if (!this.hasFormat()) return this._setValue(value)
+            return this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'invalid_type',
+                        expected: 'object',
+                        received: 'string',
+                        path: [],
+                        message: 'Format does not match',
+                    },
+                ]),
+            })
+        } else if (this.hasFormat()) return this._applyFormat(value)
+
+        return this._wrapError({
+            success: false,
+            error: new ZodError([
+                {
+                    code: 'invalid_type',
+                    expected: 'string',
+                    received: 'object',
+                    path: [],
+                    message: 'You must apply format',
+                },
+            ]),
+        })
     }
 
-    applyFormat(data: Record<string, any>): boolean {
-        if (!this._schema.format) {
-            this._wrapError({ success: false, error: new Error('No format to apply') })
-            return false
-        }
+    protected _applyFormat(data: Record<string, any>): boolean {
+        if (!this._schema.format) return false
 
         const value = applyFormat(
             this._schema.format,
@@ -95,7 +119,18 @@ export class StringType extends BaseClass {
         if (this._schema.format) {
             const delimiter = this._options.delimiter
             if (this._schema.format.split(delimiter).length !== value.split(delimiter).length) {
-                this._wrapError({ success: false, error: new Error('Format does not match') })
+                this._wrapError({
+                    success: false,
+                    error: new ZodError([
+                        {
+                            code: 'invalid_type',
+                            expected: 'object',
+                            received: 'string',
+                            path: [],
+                            message: 'Format does not match',
+                        },
+                    ]),
+                })
                 return false
             }
         }
@@ -108,7 +143,18 @@ export class StringType extends BaseClass {
 
     private _setValue(value: string, force?: boolean): boolean {
         if (!force && this._schema.format) {
-            this._wrapError({ success: false, error: new Error('You must apply format') })
+            this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'invalid_type',
+                        expected: 'string',
+                        received: 'object',
+                        path: [],
+                        message: 'You must apply format',
+                    },
+                ]),
+            })
             return false
         }
 

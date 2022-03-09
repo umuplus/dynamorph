@@ -1,5 +1,5 @@
 import { Attribute, BaseClass } from './'
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 
 export const Timestamp = z.enum(['ISO_STRING', 'MILLISECONDS', 'SECONDS'])
 export type Timestamp = z.infer<typeof Timestamp>
@@ -47,7 +47,18 @@ export class TimestampType extends BaseClass {
     setValue(value: Date | string | number): boolean {
         if (value instanceof Date) this._value = value
         else if (typeof value === 'string') {
-            if (this.schema.type !== Timestamp.Values.ISO_STRING) throw new Error('Timestamp type must be an ISO_STRING to save a string.')
+            if (this.schema.type !== Timestamp.Values.ISO_STRING)
+                return this._wrapError({
+                    success: false,
+                    error: new ZodError([
+                        {
+                            code: 'invalid_enum_value',
+                            options: [Timestamp.Values.ISO_STRING],
+                            path: ['schema', 'type'],
+                            message: 'Timestamp type must be an ISO_STRING to save a string.',
+                        },
+                    ]),
+                })
 
             this._value = new Date(value)
         } else if (typeof value === 'number') {
@@ -60,10 +71,43 @@ export class TimestampType extends BaseClass {
                     this._value = new Date(value * 1000)
                     break
                 }
-                default: throw new Error('Timestamp type must be MILLISECONDS or SECONDS to save a number.')
+                default:
+                    return this._wrapError({
+                        success: false,
+                        error: new ZodError([
+                            {
+                                code: 'invalid_enum_value',
+                                options: [Timestamp.Values.MILLISECONDS, Timestamp.Values.SECONDS],
+                                path: ['schema', 'type'],
+                                message: 'Timestamp type must be MILLISECONDS or SECONDS to save a number.',
+                            },
+                        ]),
+                    })
             }
-        } else throw new Error('Invalid value type.')
-        if (isNaN(this._value.getTime())) throw new Error('Invalid date')
+        } else return this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'invalid_type',
+                        expected: 'date',
+                        received: typeof value,
+                        path: [],
+                        message: 'Invalid value type.',
+                    },
+                ]),
+            })
+        if (isNaN(this._value.getTime())) return this._wrapError({
+            success: false,
+            error: new ZodError([
+                {
+                    code: 'invalid_type',
+                    expected: 'date',
+                    received: typeof value,
+                    path: [],
+                    message: 'Invalid date.',
+                },
+            ]),
+        })
         return true
     }
 }
