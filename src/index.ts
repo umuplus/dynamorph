@@ -1,17 +1,23 @@
 import { BaseClass } from './models/types'
 import { DeleteCommand, DeleteCommandInput } from '@aws-sdk/lib-dynamodb'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
-import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
 import { ModelConfiguration } from './models'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
-import { SoftDeleteType } from './models/types/soft-delete.type'
-import { TimestampOn, TimestampType } from './models/types/timestamp.type'
-import { UpdateTokenType } from './models/types/update-token.type'
-import { StringType } from './models/types/string.type'
 import { NumberType } from './models/types/number.type'
+import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
+import { SoftDeleteType } from './models/types/soft-delete.type'
+import { StringType } from './models/types/string.type'
+import { TimestampOn, TimestampType } from './models/types/timestamp.type'
+import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
+import { UpdateTokenType } from './models/types/update-token.type'
+import { ZodError } from 'zod'
 
 export type CompositeKey = { [key: string]: NativeAttributeValue }
 export type Data = Record<string, any>
+export type SoftDeleteInput = Omit<
+    UpdateCommandInput,
+    'TableName' | 'Key' | 'UpdateExpression' | 'ConditionExpression' | 'ExpressionAttributeNames' | 'ExpressionAttributeValues'
+>
 
 export class Dynamorph extends BaseClass {
     protected readonly _config: ModelConfiguration
@@ -118,8 +124,7 @@ export class Dynamorph extends BaseClass {
                 type.setValue(type.hasFormat() ? data : data[key])
                 const fieldName = type.schema.fieldName || key
                 output[fieldName] = type.getValue()
-            }
-            else if (type instanceof NumberType) {
+            } else if (type instanceof NumberType) {
                 type.setValue(data[key])
                 const fieldName = type.schema.fieldName || key
                 output[fieldName] = type.getValue()
@@ -131,18 +136,109 @@ export class Dynamorph extends BaseClass {
     }
 
     putCommand(data: Data, customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand | undefined {
-        const params = { TableName: this._config.tableName, Item: this.item(data) }
+        const params: PutCommandInput = { TableName: this._config.tableName, Item: this.item(data) }
         return new PutCommand({ ...params, ...customize })
     }
 
     getCommand(data: Data, customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand | undefined {
-        const params = { TableName: this._config.tableName, Key: this.key(data) }
+        const params: GetCommandInput = { TableName: this._config.tableName, Key: this.key(data) }
         return new GetCommand({ ...params, ...customize })
     }
 
     deleteCommand(data: Data, customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand | undefined {
-        const params = { TableName: this._config.tableName, Key: this.key(data) }
+        const params: DeleteCommandInput = { TableName: this._config.tableName, Key: this.key(data) }
         return new DeleteCommand({ ...params, ...customize })
+    }
+
+    softDeleteCommand(data: Data, isDeleted = true, customize?: SoftDeleteInput): UpdateCommand | undefined {
+        if (!this._softDelete.length) {
+            this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'custom',
+                        path: [],
+                        message: 'Format does not match',
+                    },
+                ]),
+            })
+            return undefined
+        }
+
+        const conditionExpression: string[] = []
+
+        const updateExpression: string[] = []
+        const ExpressionAttributeNames: Record<string, string> = {}
+        const ExpressionAttributeValues: Record<string, any> = {}
+
+        this._softDelete.forEach((key) => {
+            const type = this._config.schema[key]
+            if (type instanceof SoftDeleteType) {
+                const fieldName = type.schema.fieldName || key
+                updateExpression.push(`#${fieldName} = :${fieldName}`)
+                ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
+            }
+        })
+        if (isDeleted) {
+            this._deletedAt.forEach((key) => {
+                const type = this._config.schema[key]
+                if (type instanceof TimestampType) {
+                    if (!type.setValue(new Date())) {
+                        type.getErrors().map((e) => this._wrapError({ success: false, error: e }))
+                        return
+                    }
+
+                    const fieldName = type.schema.fieldName || key
+                    updateExpression.push(`#${fieldName} = :${fieldName}`)
+                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                    ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                }
+            })
+        } else {
+            this._updatedAt.forEach((key) => {
+                const type = this._config.schema[key]
+                if (type instanceof TimestampType) {
+                    if (!type.setValue(new Date())) {
+                        type.getErrors().map((e) => this._wrapError({ success: false, error: e }))
+                        return
+                    }
+
+                    const fieldName = type.schema.fieldName || key
+                    updateExpression.push(`#${fieldName} = :${fieldName}`)
+                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                    ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                }
+            })
+        }
+
+        this._updateToken.forEach((key) => {
+            const type = this._config.schema[key]
+            if (type instanceof UpdateTokenType) {
+                const fieldName = type.schema.fieldName || key
+                const currentToken = type.getValue()
+                if (currentToken) {
+                    conditionExpression.push(`#ce_${fieldName} = :ce_${fieldName}`)
+                    ExpressionAttributeNames[`#ce_${fieldName}`] = fieldName
+                    ExpressionAttributeValues[`:ce_${fieldName}`] = currentToken
+                }
+
+                type.setValue()
+                updateExpression.push(`#${fieldName} = :${fieldName}`)
+                ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+            }
+        })
+
+        const params: UpdateCommandInput = {
+            TableName: this._config.tableName,
+            Key: this.key(data),
+            UpdateExpression: `SET ${updateExpression.join(', ')}`,
+            ConditionExpression: conditionExpression.length ? conditionExpression.join(' AND ') : undefined,
+            ExpressionAttributeNames,
+            ExpressionAttributeValues,
+        }
+        return new UpdateCommand({ ...params, ...customize })
     }
 }
 

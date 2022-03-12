@@ -88,9 +88,7 @@ export class TimestampType extends BaseClass {
                 success: false,
                 error: new ZodError([
                     {
-                        code: 'invalid_type',
-                        expected: 'date',
-                        received: typeof value,
+                        code: 'custom',
                         path: [],
                         message: 'Invalid value type.',
                     },
@@ -100,9 +98,7 @@ export class TimestampType extends BaseClass {
             success: false,
             error: new ZodError([
                 {
-                    code: 'invalid_type',
-                    expected: 'date',
-                    received: typeof value,
+                    code: 'custom',
                     path: [],
                     message: 'Invalid date.',
                 },

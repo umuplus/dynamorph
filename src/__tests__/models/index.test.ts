@@ -58,4 +58,11 @@ test('basic model', () => {
 
     const deleteCommandCustom = model.deleteCommand(data, { ReturnConsumedCapacity: 'TOTAL' })
     expect(deleteCommandCustom?.input.ReturnConsumedCapacity).toEqual('TOTAL')
+
+    // * Soft Delete via UpdateCommand
+    const softDeleteCommand = model.softDeleteCommand(data)
+    expect(softDeleteCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_dat = :_dat, #_token = :_token')
+    expect(softDeleteCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
+    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(true)
+    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(softDeleteCommand?.input.ExpressionAttributeValues?.[':_token'])
 })

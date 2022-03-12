@@ -45,9 +45,7 @@ export class StringType extends BaseClass {
                 success: false,
                 error: new ZodError([
                     {
-                        code: 'invalid_type',
-                        expected: 'object',
-                        received: 'string',
+                        code: 'custom',
                         path: [],
                         message: 'Format does not match',
                     },
@@ -59,9 +57,7 @@ export class StringType extends BaseClass {
             success: false,
             error: new ZodError([
                 {
-                    code: 'invalid_type',
-                    expected: 'string',
-                    received: 'object',
+                    code: 'custom',
                     path: [],
                     message: 'You must apply format',
                 },
@@ -123,9 +119,7 @@ export class StringType extends BaseClass {
                     success: false,
                     error: new ZodError([
                         {
-                            code: 'invalid_type',
-                            expected: 'object',
-                            received: 'string',
+                            code: 'custom',
                             path: [],
                             message: 'Format does not match',
                         },
@@ -147,9 +141,7 @@ export class StringType extends BaseClass {
                 success: false,
                 error: new ZodError([
                     {
-                        code: 'invalid_type',
-                        expected: 'string',
-                        received: 'object',
+                        code: 'custom',
                         path: [],
                         message: 'You must apply format',
                     },
