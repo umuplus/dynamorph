@@ -14,12 +14,14 @@ export const TimestampAttribute = Attribute.extend({
 export type TimestampAttribute = z.infer<typeof TimestampAttribute>
 
 export class TimestampType extends BaseClass {
+    protected readonly _propertyName: string
     protected readonly _schema: TimestampAttribute
     protected _value: Date = new Date()
 
-    constructor(schema: TimestampAttribute, profileName?: string) {
+    constructor(propertyName: string, schema: TimestampAttribute, profileName?: string) {
         super(profileName)
 
+        this._propertyName = propertyName
         this._schema = TimestampAttribute.parse(schema)
 
         Object.setPrototypeOf(this, TimestampType.prototype)
@@ -27,6 +29,10 @@ export class TimestampType extends BaseClass {
 
     get schema() {
         return this._schema
+    }
+
+    get propertyName() {
+        return this._propertyName
     }
 
     getValue() {
@@ -44,7 +50,7 @@ export class TimestampType extends BaseClass {
         }
     }
 
-    setValue(value: Date | string | number): boolean {
+    setValue(value: Date | string | number = new Date()): boolean {
         if (value instanceof Date) this._value = value
         else if (typeof value === 'string') {
             if (this.schema.type !== Timestamp.Values.ISO_STRING)

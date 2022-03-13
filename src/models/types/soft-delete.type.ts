@@ -1,12 +1,14 @@
 import { Attribute, BaseClass } from './'
 
 export class SoftDeleteType extends BaseClass {
+    protected readonly _propertyName: string
     protected readonly _schema: Attribute
     protected _value: boolean | undefined = undefined
 
-    constructor(schema?: Attribute, profileName?: string) {
+    constructor(propertyName: string, schema?: Attribute, profileName?: string) {
         super(profileName)
 
+        this._propertyName = propertyName
         this._schema = Attribute.parse(schema || {})
 
         Object.setPrototypeOf(this, SoftDeleteType.prototype)
@@ -14,6 +16,10 @@ export class SoftDeleteType extends BaseClass {
 
     get schema() {
         return this._schema
+    }
+
+    get propertyName() {
+        return this._propertyName
     }
 
     getValue() {

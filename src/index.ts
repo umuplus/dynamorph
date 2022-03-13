@@ -19,40 +19,81 @@ export type SoftDeleteInput = Omit<
     'TableName' | 'Key' | 'UpdateExpression' | 'ConditionExpression' | 'ExpressionAttributeNames' | 'ExpressionAttributeValues'
 >
 
-export class Dynamorph extends BaseClass {
+export abstract class Dynamorph extends BaseClass {
     protected readonly _config: ModelConfiguration
 
     // * main attributes
-    protected readonly _partitionKey: string
-    protected _sortKey: string | undefined = undefined
+    protected readonly _partitionKey: StringType
+    protected _sortKey: StringType | undefined = undefined
 
     // * soft delete feature
-    protected _softDelete: string[] = []
+    protected _softDelete: SoftDeleteType[] = []
 
     // * update token feature
-    protected _updateToken: string[] = []
+    protected _updateToken: UpdateTokenType[] = []
 
     // * timestamp features
-    protected _createdAt: string[] = []
-    protected _updatedAt: string[] = []
-    protected _deletedAt: string[] = []
+    protected _createdAt: TimestampType[] = []
+    protected _updatedAt: TimestampType[] = []
+    protected _deletedAt: TimestampType[] = []
 
-    constructor(config: ModelConfiguration, profileName?: string) {
+    protected _data: Data = {}
+
+    constructor(config: ModelConfiguration, data: Data, profileName?: string) {
         super(profileName)
 
+        this._data = data
         this._config = ModelConfiguration.parse(config)
-        this._partitionKey = Object.keys(this._config.schema).find((key) => this._config.schema[key].schema.partitionKey)!
+
+        // * partition key
+        const partitionKey = Object.keys(this._config.schema).find((key) => {
+            const type = this._config.schema[key]
+            if (type.schema.partitionKey && type instanceof StringType) {
+                if (!type.setValue(type.hasFormat() ? this._data : this._data[key])) {
+                    this._wrapError({ success: false, error: type.getErrors() })
+                    return false
+                }
+                return true
+            }
+            return false
+        })
+        this._partitionKey = this._config.schema[partitionKey!] as StringType
+        if (!this._partitionKey)
+            this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'custom',
+                        path: [],
+                        message: 'There is no proper partition key.',
+                    },
+                ]),
+            })
+
+        // * other attributes
         Object.keys(this._config.schema).forEach((key) => {
             const type = this._config.schema[key]
-            if (type instanceof SoftDeleteType) this._softDelete.push(key)
-            else if (type instanceof UpdateTokenType) this._updateToken.push(key)
-            else if (type instanceof TimestampType) {
-                if (type.schema['on'] === TimestampOn.Values.CREATE) this._createdAt.push(key)
-                else if (type.schema['on'] === TimestampOn.Values.UPDATE) this._updatedAt.push(key)
-                else if (type.schema['on'] === TimestampOn.Values.DELETE) this._deletedAt.push(key)
-            }
+            const fieldName = type.schema.fieldName || key
+            if (type instanceof SoftDeleteType) {
+                type.setValue(this._data[fieldName] || this._data[key])
+                this._softDelete.push(type)
+            } else if (type instanceof UpdateTokenType) {
+                type.setValue(this._data[fieldName] || this._data[key])
+                this._updateToken.push(type)
+            } else if (type instanceof TimestampType) {
+                type.setValue(this._data[fieldName] || this._data[key])
+                if (type.schema['on'] === TimestampOn.Values.CREATE) this._createdAt.push(type)
+                else if (type.schema['on'] === TimestampOn.Values.UPDATE) this._updatedAt.push(type)
+                else if (type.schema['on'] === TimestampOn.Values.DELETE) this._deletedAt.push(type)
+            } else if (type instanceof NumberType) {
+                if (!type.setValue(this._data[this._data[fieldName] || this._data[key]]))
+                    this._wrapError({ success: false, error: type.getErrors() })
+            } else if (type instanceof StringType) {
+                if (!type.setValue(type.hasFormat() ? this._data : this._data[fieldName] || this._data[key]))
+                    this._wrapError({ success: false, error: type.getErrors() })
 
-            if (!this._sortKey && type.schema.sortKey) this._sortKey = key
+                if (!this._sortKey && type.schema.sortKey) this._sortKey = type
+            }
         })
 
         Object.setPrototypeOf(this, Dynamorph.prototype)
@@ -62,57 +103,36 @@ export class Dynamorph extends BaseClass {
         return this._config
     }
 
-    key(data: Data) {
+    key() {
         const key: any = {}
-        const partitionKey = this._config.schema[this._partitionKey]
-        const partitionKeyName = partitionKey.schema.fieldName || this._partitionKey
-        if (partitionKey instanceof StringType) {
-            if (partitionKey.hasFormat()) partitionKey.setValue(data)
-            else partitionKey.setValue(data[this._partitionKey])
-            key[partitionKeyName] = partitionKey.getValue()
-        }
-        const sortKey = this._sortKey ? this._config.schema[this._sortKey] : undefined
-        const sortKeyName = sortKey?.schema.fieldName || this._sortKey
-        if (this._sortKey && sortKeyName && sortKey instanceof StringType) {
-            if (sortKey.hasFormat()) sortKey.setValue(data)
-            else sortKey.setValue(data[this._sortKey])
-            key[sortKeyName] = sortKey.getValue()
-        }
+        const partitionKeyName = this._partitionKey.schema.fieldName || this._partitionKey.propertyName
+        key[partitionKeyName] = this._partitionKey.getValue()
+
+        const sortKeyName = this._sortKey?.schema.fieldName || this._sortKey?.propertyName
+        if (this._sortKey && sortKeyName) key[sortKeyName] = this._sortKey.getValue()
         return key
     }
 
-    item(data: Data) {
-        let item: any = this.key(data)
+    item() {
+        let item: any = this.key()
         if (this._updateToken.length)
-            item = this._updateToken.reduce((output, key) => {
-                const type = this._config.schema[key]
-                if (type instanceof UpdateTokenType) {
-                    type.setValue()
-                    const fieldName = type.schema.fieldName || key
-                    output[fieldName] = type.getValue()
-                }
+            item = this._updateToken.reduce((output, type) => {
+                const fieldName = type.schema.fieldName || type.propertyName
+                output[fieldName] = type.getValue()
                 return output
             }, item)
 
         if (this._softDelete.length)
-            item = this._softDelete.reduce((output, key) => {
-                const type = this._config.schema[key]
-                if (type instanceof SoftDeleteType) {
-                    type.setValue(false)
-                    const fieldName = type.schema.fieldName || key
-                    output[fieldName] = type.getValue()
-                }
+            item = this._softDelete.reduce((output, type) => {
+                const fieldName = type.schema.fieldName || type.propertyName
+                output[fieldName] = type.getValue()
                 return output
             }, item)
 
         if (this._createdAt.length)
-            item = this._createdAt.reduce((output, key) => {
-                const type = this._config.schema[key]
-                if (type instanceof TimestampType) {
-                    type.setValue(new Date())
-                    const fieldName = type.schema.fieldName || key
-                    output[fieldName] = type.getValue()
-                }
+            item = this._createdAt.reduce((output, type) => {
+                const fieldName = type.schema.fieldName || type.propertyName
+                output[fieldName] = type.getValue()
                 return output
             }, item)
 
@@ -120,37 +140,31 @@ export class Dynamorph extends BaseClass {
             const type = this._config.schema[key]
             if (output[key] || type.schema.ignore) return output
 
-            if (type instanceof StringType) {
-                type.setValue(type.hasFormat() ? data : data[key])
-                const fieldName = type.schema.fieldName || key
-                output[fieldName] = type.getValue()
-            } else if (type instanceof NumberType) {
-                type.setValue(data[key])
-                const fieldName = type.schema.fieldName || key
-                output[fieldName] = type.getValue()
-            }
-
+            const fieldName = type.schema.fieldName || key
+            output[fieldName] = type.getValue()
             return output
         }, item)
         return item
     }
 
-    putCommand(data: Data, customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand | undefined {
-        const params: PutCommandInput = { TableName: this._config.tableName, Item: this.item(data) }
+    // TODO!: update type values via a method like record(data: Data)
+    // then remove data parameter from command methods.
+    putCommand(customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand | undefined {
+        const params: PutCommandInput = { TableName: this._config.tableName, Item: this.item() }
         return new PutCommand({ ...params, ...customize })
     }
 
-    getCommand(data: Data, customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand | undefined {
-        const params: GetCommandInput = { TableName: this._config.tableName, Key: this.key(data) }
+    getCommand(customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand | undefined {
+        const params: GetCommandInput = { TableName: this._config.tableName, Key: this.key() }
         return new GetCommand({ ...params, ...customize })
     }
 
-    deleteCommand(data: Data, customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand | undefined {
-        const params: DeleteCommandInput = { TableName: this._config.tableName, Key: this.key(data) }
+    deleteCommand(customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand | undefined {
+        const params: DeleteCommandInput = { TableName: this._config.tableName, Key: this.key() }
         return new DeleteCommand({ ...params, ...customize })
     }
 
-    softDeleteCommand(data: Data, isDeleted = true, customize?: SoftDeleteInput): UpdateCommand | undefined {
+    softDeleteCommand(isDeleted = true, customize?: SoftDeleteInput): UpdateCommand | undefined {
         if (!this._softDelete.length) {
             this._wrapError({
                 success: false,
@@ -171,51 +185,41 @@ export class Dynamorph extends BaseClass {
         const ExpressionAttributeNames: Record<string, string> = {}
         const ExpressionAttributeValues: Record<string, any> = {}
 
-        this._softDelete.forEach((key) => {
-            const type = this._config.schema[key]
+        this._softDelete.forEach((type) => {
             if (type instanceof SoftDeleteType) {
-                const fieldName = type.schema.fieldName || key
+                const fieldName = type.schema.fieldName || type.propertyName
                 updateExpression.push(`#${fieldName} = :${fieldName}`)
                 ExpressionAttributeNames[`#${fieldName}`] = fieldName
                 ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
             }
         })
         if (isDeleted) {
-            this._deletedAt.forEach((key) => {
-                const type = this._config.schema[key]
+            this._deletedAt.forEach((type) => {
                 if (type instanceof TimestampType) {
-                    if (!type.setValue(new Date())) {
-                        type.getErrors().map((e) => this._wrapError({ success: false, error: e }))
-                        return
-                    }
-
-                    const fieldName = type.schema.fieldName || key
-                    updateExpression.push(`#${fieldName} = :${fieldName}`)
-                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                    ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                    if (type.setValue(new Date())) {
+                        const fieldName = type.schema.fieldName || type.propertyName
+                        updateExpression.push(`#${fieldName} = :${fieldName}`)
+                        ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                        ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                    } else this._wrapError({ success: false, error: type.getErrors() })
                 }
             })
         } else {
-            this._updatedAt.forEach((key) => {
-                const type = this._config.schema[key]
+            this._updatedAt.forEach((type) => {
                 if (type instanceof TimestampType) {
-                    if (!type.setValue(new Date())) {
-                        type.getErrors().map((e) => this._wrapError({ success: false, error: e }))
-                        return
-                    }
-
-                    const fieldName = type.schema.fieldName || key
-                    updateExpression.push(`#${fieldName} = :${fieldName}`)
-                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                    ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                    if (type.setValue(new Date())) {
+                        const fieldName = type.schema.fieldName || type.propertyName
+                        updateExpression.push(`#${fieldName} = :${fieldName}`)
+                        ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                        ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                    } else this._wrapError({ success: false, error: type.getErrors() })
                 }
             })
         }
 
-        this._updateToken.forEach((key) => {
-            const type = this._config.schema[key]
+        this._updateToken.forEach((type) => {
             if (type instanceof UpdateTokenType) {
-                const fieldName = type.schema.fieldName || key
+                const fieldName = type.schema.fieldName || type.propertyName
                 const currentToken = type.getValue()
                 if (currentToken) {
                     conditionExpression.push(`#ce_${fieldName} = :ce_${fieldName}`)
@@ -232,7 +236,7 @@ export class Dynamorph extends BaseClass {
 
         const params: UpdateCommandInput = {
             TableName: this._config.tableName,
-            Key: this.key(data),
+            Key: this.key(),
             UpdateExpression: `SET ${updateExpression.join(', ')}`,
             ConditionExpression: conditionExpression.length ? conditionExpression.join(' AND ') : undefined,
             ExpressionAttributeNames,

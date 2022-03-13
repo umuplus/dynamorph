@@ -12,7 +12,7 @@ export type Attribute = z.infer<typeof Attribute>
 
 export class BaseClass {
     protected readonly _options: Options
-    protected _validationErrors: Array<ZodError> = []
+    protected _validationErrors: ZodError = new ZodError([])
 
     constructor(profileName?: string) {
         this._options = config.profile(profileName)!
@@ -20,14 +20,16 @@ export class BaseClass {
 
     protected _wrapError(validation: { success: boolean; error?: ZodError }): boolean {
         if (!validation.success) {
-            this._validationErrors.push(validation.error!)
+            this._validationErrors.addIssues(
+                validation.error!.issues.filter((issue) => !this._validationErrors.issues.find((i) => i.message === issue.message)),
+            )
             if (!this._options.safe) throw this._validationErrors
         }
         return validation.success
     }
 
     hasErrors() {
-        return !!this._validationErrors.length
+        return !!this._validationErrors.issues.length
     }
 
     getErrors() {

@@ -8,12 +8,14 @@ export const UpdateTokenAttribute = Attribute.extend({
 export type UpdateTokenAttribute = z.infer<typeof UpdateTokenAttribute>
 
 export class UpdateTokenType extends BaseClass {
+    protected readonly _propertyName: string
     protected readonly _schema: UpdateTokenAttribute
     protected _value: string | undefined = undefined
 
-    constructor(schema?: UpdateTokenAttribute, profileName?: string) {
+    constructor(propertyName: string, schema?: UpdateTokenAttribute, profileName?: string) {
         super(profileName)
 
+        this._propertyName = propertyName
         this._schema = UpdateTokenAttribute.parse(schema || {})
 
         Object.setPrototypeOf(this, UpdateTokenType.prototype)
@@ -23,12 +25,16 @@ export class UpdateTokenType extends BaseClass {
         return this._schema
     }
 
+    get propertyName() {
+        return this._propertyName
+    }
+
     getValue() {
         return this._value
     }
 
-    setValue(): boolean {
-        this._value = generateRandomString(this._schema.length)
+    setValue(token?: string): boolean {
+        this._value = token || generateRandomString(this._schema.length)
         return true
     }
 }

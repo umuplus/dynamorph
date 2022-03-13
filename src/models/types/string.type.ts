@@ -17,13 +17,15 @@ export const StringAttribute = Attribute.extend({
 export type StringAttribute = z.infer<typeof StringAttribute>
 
 export class StringType extends BaseClass {
+    protected readonly _propertyName: string
     protected readonly _schema: StringAttribute
     protected readonly _relatedAttributes: string[]
     protected _value: string | undefined = undefined
 
-    constructor(schema?: StringAttribute, profileName?: string) {
+    constructor(propertyName: string, schema?: StringAttribute, profileName?: string) {
         super(profileName)
 
+        this._propertyName = propertyName
         this._schema = StringAttribute.parse(schema || {})
         this._relatedAttributes = this._schema.format ? findRelatedAttributes(this._schema.format) : []
 
@@ -32,6 +34,10 @@ export class StringType extends BaseClass {
 
     get schema() {
         return this._schema
+    }
+
+    get propertyName() {
+        return this._propertyName
     }
 
     hasFormat() {
@@ -46,7 +52,7 @@ export class StringType extends BaseClass {
                 error: new ZodError([
                     {
                         code: 'custom',
-                        path: [],
+                        path: [this._propertyName],
                         message: 'Format does not match',
                     },
                 ]),
@@ -58,7 +64,7 @@ export class StringType extends BaseClass {
             error: new ZodError([
                 {
                     code: 'custom',
-                    path: [],
+                    path: [this._propertyName],
                     message: 'You must apply format',
                 },
             ]),
@@ -79,7 +85,9 @@ export class StringType extends BaseClass {
     }
 
     getValue() {
-        return this._value
+        if (typeof this._value === 'string') return this._value
+
+        return this._value ? (this._value as any).toString() : undefined
     }
 
     getZodModel() {
@@ -120,7 +128,7 @@ export class StringType extends BaseClass {
                     error: new ZodError([
                         {
                             code: 'custom',
-                            path: [],
+                            path: [this._propertyName],
                             message: 'Format does not match',
                         },
                     ]),
@@ -142,7 +150,7 @@ export class StringType extends BaseClass {
                 error: new ZodError([
                     {
                         code: 'custom',
-                        path: [],
+                        path: [this._propertyName],
                         message: 'You must apply format',
                     },
                 ]),

@@ -9,12 +9,14 @@ export const NumberAttribute = Attribute.extend({
 export type NumberAttribute = z.infer<typeof NumberAttribute>
 
 export class NumberType extends BaseClass {
+    protected readonly _propertyName: string
     protected readonly _schema: NumberAttribute
-    protected _value: number | undefined = undefined
+    protected _value: number = NaN
 
-    constructor(schema?: NumberAttribute, profileName?: string) {
+    constructor(propertyName: string, schema?: NumberAttribute, profileName?: string) {
         super(profileName)
 
+        this._propertyName = propertyName
         this._schema = NumberAttribute.parse(schema || {})
 
         Object.setPrototypeOf(this, NumberType.prototype)
@@ -24,6 +26,10 @@ export class NumberType extends BaseClass {
         return this._schema
     }
 
+    get propertyName() {
+        return this._propertyName
+    }
+
     setValue(value: number): boolean {
         const validation = this.validate(value)
         if (validation) this._value = this._schema.transform ? this._schema.transform(value) : value
@@ -31,7 +37,7 @@ export class NumberType extends BaseClass {
     }
 
     getValue() {
-        return this._value
+        return typeof this._value === 'number' ? this._value : NaN
     }
 
     getZodModel() {
