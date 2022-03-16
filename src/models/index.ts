@@ -10,7 +10,7 @@ const AllTypesTogether = z.union([
     z.instanceof(TimestampType),
     z.instanceof(UpdateTokenType),
 ])
-export const Schema = z.record(AllTypesTogether)
+export const Schema = AllTypesTogether.array().min(1)
 
 export type Schema = z.infer<typeof Schema>
 
@@ -19,8 +19,16 @@ export const ModelConfiguration = z.object({
     tableName: z.string().min(1),
     schema: Schema.refine(
         (schema) => {
-            const partitionKeys = Object.keys(schema).filter((key) => schema[key].schema.partitionKey)
-            const sortKeys = Object.keys(schema).filter((key) => schema[key].schema.sortKey)
+            const properties = new Set(schema.map((type) => type.schema.fieldName))
+            return schema.length === properties.size
+        },
+        {
+            message: 'You cannot redefine attributes.',
+        },
+    ).refine(
+        (schema) => {
+            const partitionKeys = schema.filter((type) => type.schema.partitionKey)
+            const sortKeys = schema.filter((type) => type.schema.sortKey)
             return partitionKeys.length === 1 && (!sortKeys.length || sortKeys.length === 1)
         },
         {

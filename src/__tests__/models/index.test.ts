@@ -11,38 +11,54 @@ class User extends Dynamorph {
             {
                 modelName: 'User',
                 tableName: 'MyUserTable',
-                schema: {
-                    // TODO! find a better way to pass property names
-                    part: new StringType('part', { partitionKey: true, fieldName: 'pk', format: 'ID#{userId}' }),
-                    sort: new StringType('sort', { sortKey: true, fieldName: 'sk' }),
+                schema: [
+                    new StringType('part', { partitionKey: true, fieldName: 'pk', format: 'ID#{userId}' }),
+                    new StringType('sort', { sortKey: true, fieldName: 'sk' }),
 
-                    userId: new StringType('userId', { ignore: true }),
+                    new StringType('userId', { ignore: true }),
 
-                    createdAt: new TimestampType('createdAt', {
+                    new TimestampType('createdAt', {
                         on: TimestampOn.Values.CREATE,
                         type: Timestamp.Values.ISO_STRING,
                         fieldName: '_cat',
                     }),
 
-                    updateToken: new UpdateTokenType('updateToken', { fieldName: '_token' }),
-                    updatedAt: new TimestampType('updatedAt', {
+                    new UpdateTokenType('updateToken', { fieldName: '_token' }),
+                    new TimestampType('updatedAt', {
                         on: TimestampOn.Values.UPDATE,
                         type: Timestamp.Values.ISO_STRING,
                         fieldName: '_uat',
                     }),
 
-                    isDeleted: new SoftDeleteType('isDeleted', { fieldName: '_isd' }),
-                    deletedAt: new TimestampType('deletedAt', {
+                    new SoftDeleteType('isDeleted', { fieldName: '_isd' }),
+                    new TimestampType('deletedAt', {
                         on: TimestampOn.Values.DELETE,
                         type: Timestamp.Values.ISO_STRING,
                         fieldName: '_dat',
                     }),
-                },
+                ],
             },
             data,
         )
     }
 }
+
+test('redefining attributes is wrong', () => {
+    class InvalidUser extends Dynamorph {
+        constructor(data: Data) {
+            super(
+                {
+                    modelName: 'InvalidUser',
+                    tableName: 'MyUserTable',
+                    schema: [new StringType('userId', { ignore: true }), new StringType('id', { ignore: true })],
+                },
+                data,
+            )
+        }
+    }
+    expect(() => new InvalidUser({})).toThrow('You cannot redefine attributes.')
+    expect(() => new InvalidUser({})).toThrow('You can have only one partition key and one optional sort key.')
+})
 
 test('basic model', () => {
     config.update({ safe: false, delimiter: '#' })

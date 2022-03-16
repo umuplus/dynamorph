@@ -46,8 +46,8 @@ export abstract class Dynamorph extends BaseClass {
         this._config = ModelConfiguration.parse(config)
 
         // * partition key
-        const partitionKey = Object.keys(this._config.schema).find((key) => {
-            const type = this._config.schema[key]
+        this._partitionKey = this._config.schema.find((type) => {
+            const key = type.propertyName
             if (type.schema.partitionKey && type instanceof StringType) {
                 if (!type.setValue(type.hasFormat() ? this._data : this._data[key])) {
                     this._wrapError({ success: false, error: type.getErrors() })
@@ -56,8 +56,7 @@ export abstract class Dynamorph extends BaseClass {
                 return true
             }
             return false
-        })
-        this._partitionKey = this._config.schema[partitionKey!] as StringType
+        }) as StringType
         if (!this._partitionKey)
             this._wrapError({
                 success: false,
@@ -71,25 +70,24 @@ export abstract class Dynamorph extends BaseClass {
             })
 
         // * other attributes
-        Object.keys(this._config.schema).forEach((key) => {
-            const type = this._config.schema[key]
-            const fieldName = type.schema.fieldName || key
+        this._config.schema.forEach((type) => {
+            const fieldName = type.schema.fieldName || type.propertyName
             if (type instanceof SoftDeleteType) {
-                type.setValue(this._data[fieldName] || this._data[key])
+                type.setValue(this._data[fieldName] || this._data[type.propertyName])
                 this._softDelete.push(type)
             } else if (type instanceof UpdateTokenType) {
-                type.setValue(this._data[fieldName] || this._data[key])
+                type.setValue(this._data[fieldName] || this._data[type.propertyName])
                 this._updateToken.push(type)
             } else if (type instanceof TimestampType) {
-                type.setValue(this._data[fieldName] || this._data[key])
+                type.setValue(this._data[fieldName] || this._data[type.propertyName])
                 if (type.schema['on'] === TimestampOn.Values.CREATE) this._createdAt.push(type)
                 else if (type.schema['on'] === TimestampOn.Values.UPDATE) this._updatedAt.push(type)
                 else if (type.schema['on'] === TimestampOn.Values.DELETE) this._deletedAt.push(type)
             } else if (type instanceof NumberType) {
-                if (!type.setValue(this._data[this._data[fieldName] || this._data[key]]))
+                if (!type.setValue(this._data[this._data[fieldName] || this._data[type.propertyName]]))
                     this._wrapError({ success: false, error: type.getErrors() })
             } else if (type instanceof StringType) {
-                if (!type.setValue(type.hasFormat() ? this._data : this._data[fieldName] || this._data[key]))
+                if (!type.setValue(type.hasFormat() ? this._data : this._data[fieldName] || this._data[type.propertyName]))
                     this._wrapError({ success: false, error: type.getErrors() })
 
                 if (!this._sortKey && type.schema.sortKey) this._sortKey = type
@@ -136,11 +134,10 @@ export abstract class Dynamorph extends BaseClass {
                 return output
             }, item)
 
-        item = Object.keys(this._config.schema).reduce((output, key) => {
-            const type = this._config.schema[key]
-            if (output[key] || type.schema.ignore) return output
+        item = this._config.schema.reduce((output, type) => {
+            if (output[type.propertyName] || type.schema.ignore) return output
 
-            const fieldName = type.schema.fieldName || key
+            const fieldName = type.schema.fieldName || type.propertyName
             output[fieldName] = type.getValue()
             return output
         }, item)
