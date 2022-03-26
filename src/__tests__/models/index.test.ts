@@ -60,6 +60,24 @@ test('redefining attributes is wrong', () => {
     expect(() => new InvalidUser({})).toThrow('You can have only one partition key and one optional sort key.')
 })
 
+test('manage attributes dynamically', () => {
+    const anotherAttribute = new StringType('anotherAttribute', { ignore: true })
+    class UserWithDynamicAttributes extends User {
+        constructor(data: Data) {
+            super(data)
+
+            this.addAttribute(anotherAttribute, 'userId')
+            this.removeAttribute('isDeleted')
+        }
+    }
+    const instance = new UserWithDynamicAttributes({})
+    const refAttribute = instance.config.schema.findIndex(t => t.propertyName === 'userId')
+    const newAttribute = instance.config.schema.findIndex(t => t.propertyName === anotherAttribute.propertyName)
+    expect(newAttribute - refAttribute).toEqual(1)
+    expect(newAttribute).toEqual(3)
+    expect(instance.config.schema.findIndex(t => t.propertyName === 'isDeleted')).toEqual(-1)
+})
+
 test('basic model', () => {
     config.update({ safe: false, delimiter: '#' })
     const data = { userId: 'USER01', sort: 'SORT_KEY' }

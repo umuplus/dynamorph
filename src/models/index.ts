@@ -4,14 +4,15 @@ import { TimestampType } from './types/timestamp.type'
 import { UpdateTokenType } from './types/update-token.type'
 import { z } from 'zod'
 
-const AllTypesTogether = z.union([
+export const AllTypesTogether = z.union([
     z.instanceof(StringType),
     z.instanceof(SoftDeleteType),
     z.instanceof(TimestampType),
     z.instanceof(UpdateTokenType),
 ])
-export const Schema = AllTypesTogether.array().min(1)
+export type AllTypesTogether = z.infer<typeof AllTypesTogether>
 
+export const Schema = AllTypesTogether.array().min(1)
 export type Schema = z.infer<typeof Schema>
 
 export const ModelConfiguration = z.object({

@@ -1,7 +1,7 @@
+import { AllTypesTogether, ModelConfiguration } from './models'
 import { BaseClass } from './models/types'
 import { DeleteCommand, DeleteCommandInput } from '@aws-sdk/lib-dynamodb'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
-import { ModelConfiguration } from './models'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { NumberType } from './models/types/number.type'
 import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
@@ -42,8 +42,9 @@ export abstract class Dynamorph extends BaseClass {
     constructor(config: ModelConfiguration, data: Data, profileName?: string) {
         super(profileName)
 
-        this._data = data
         this._config = ModelConfiguration.parse(config)
+        // TODO! validate data against schema (dynamically)
+        this._data = data
 
         // * partition key
         this._partitionKey = this._config.schema.find((type) => {
@@ -97,6 +98,20 @@ export abstract class Dynamorph extends BaseClass {
         Object.setPrototypeOf(this, Dynamorph.prototype)
     }
 
+    protected addAttribute(attribute: AllTypesTogether, after?: string) {
+        const addTypeAfter: number = after ? this._config.schema.findIndex((type) => type.propertyName === after) || -1 : -1
+        if (!this._config.schema.find((type) => type.propertyName === attribute.propertyName)) {
+            if (addTypeAfter === -1 || addTypeAfter + 1 === this._config.schema.length - 1)
+                this._config.schema.push(AllTypesTogether.parse(attribute))
+            else this._config.schema.splice(addTypeAfter + 1, 0, attribute)
+        }
+    }
+
+    protected removeAttribute(name: string) {
+        const index = this._config.schema.findIndex((type) => type.propertyName === name)
+        if (index !== -1) this._config.schema.splice(index, 1)
+    }
+
     get config() {
         return this._config
     }
@@ -144,8 +159,6 @@ export abstract class Dynamorph extends BaseClass {
         return item
     }
 
-    // TODO!: update type values via a method like record(data: Data)
-    // then remove data parameter from command methods.
     putCommand(customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand | undefined {
         const params: PutCommandInput = { TableName: this._config.tableName, Item: this.item() }
         return new PutCommand({ ...params, ...customize })
