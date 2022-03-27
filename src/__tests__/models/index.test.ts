@@ -71,11 +71,11 @@ test('manage attributes dynamically', () => {
         }
     }
     const instance = new UserWithDynamicAttributes({})
-    const refAttribute = instance.config.schema.findIndex(t => t.propertyName === 'userId')
-    const newAttribute = instance.config.schema.findIndex(t => t.propertyName === anotherAttribute.propertyName)
+    const refAttribute = instance.config.schema.findIndex((t) => t.propertyName === 'userId')
+    const newAttribute = instance.config.schema.findIndex((t) => t.propertyName === anotherAttribute.propertyName)
     expect(newAttribute - refAttribute).toEqual(1)
     expect(newAttribute).toEqual(3)
-    expect(instance.config.schema.findIndex(t => t.propertyName === 'isDeleted')).toEqual(-1)
+    expect(instance.config.schema.findIndex((t) => t.propertyName === 'isDeleted')).toEqual(-1)
 })
 
 test('basic model', () => {
@@ -114,6 +114,20 @@ test('basic model', () => {
 
     const deleteCommandCustom = user.deleteCommand({ ReturnConsumedCapacity: 'TOTAL' })
     expect(deleteCommandCustom?.input.ReturnConsumedCapacity).toEqual('TOTAL')
+
+    // * QueryCommand
+    const queryCommand = user.queryCommand({
+        KeyConditionExpression: 'AND BEGINS_WITH(#sk, :sk)',
+        ExpressionAttributeNames: { '#sk': 'sk' },
+        ExpressionAttributeValues: { ':sk': 'SORT_' },
+    })
+    expect(queryCommand?.input.TableName).toEqual('MyUserTable')
+    expect(queryCommand?.input.KeyConditionExpression).toEqual('#pk = :pk AND BEGINS_WITH(#sk, :sk)')
+    expect(queryCommand?.input.ExpressionAttributeNames).toEqual({ '#pk': 'pk', '#sk': 'sk' })
+    expect(queryCommand?.input.ExpressionAttributeValues).toEqual({ ':pk': 'ID#USER01', ':sk': 'SORT_' })
+
+    const queryCommandCustom = user.queryCommand({ ScanIndexForward: false })
+    expect(queryCommandCustom?.input.ScanIndexForward).toEqual(false)
 
     // * Soft Delete via UpdateCommand
     const softDeleteCommand = user.softDeleteCommand()

@@ -5,6 +5,7 @@ import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { NumberType } from './models/types/number.type'
 import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
+import { QueryCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { SoftDeleteType } from './models/types/soft-delete.type'
 import { StringType } from './models/types/string.type'
 import { TimestampOn, TimestampType } from './models/types/timestamp.type'
@@ -18,6 +19,7 @@ export type SoftDeleteInput = Omit<
     UpdateCommandInput,
     'TableName' | 'Key' | 'UpdateExpression' | 'ConditionExpression' | 'ExpressionAttributeNames' | 'ExpressionAttributeValues'
 >
+export type QueryInput = Omit<QueryCommandInput, 'TableName' | 'AttributesToGet' | 'KeyConditions' | 'QueryFilter' | 'ConditionalOperator'>
 
 export abstract class Dynamorph extends BaseClass {
     protected readonly _config: ModelConfiguration
@@ -159,21 +161,56 @@ export abstract class Dynamorph extends BaseClass {
         return item
     }
 
-    putCommand(customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand | undefined {
+    queryByPartitionKey(customize?: QueryInput): QueryCommandInput {
+        const partitionKeyName = this._partitionKey.schema.fieldName || this._partitionKey.propertyName
+        const partitionKeyValue = this._partitionKey.getValue()
+        const params: QueryCommandInput = {
+            TableName: this._config.tableName,
+            KeyConditionExpression: `#${partitionKeyName} = :${partitionKeyName}`,
+            ExpressionAttributeNames: { [`#${partitionKeyName}`]: partitionKeyName },
+            ExpressionAttributeValues: { [`:${partitionKeyName}`]: partitionKeyValue },
+        }
+        if (customize) {
+            Object.keys(customize).forEach((key) => {
+                if (typeof customize[key] === 'boolean' || typeof customize[key] === 'number') params[key] = customize[key]
+                else if (typeof customize[key] === 'string') {
+                    if (typeof params[key] === 'string') params[key] += ' ' + customize[key]
+                    else params[key] = customize[key]
+                }
+                else if (Array.isArray(customize[key])) {
+                    if (Array.isArray(params[key])) params[key].push(...customize[key])
+                    else params[key] = customize[key]
+                }
+                else if (customize[key] && typeof customize[key] === 'object') {
+                    if (typeof params[key] === 'object') params[key] = { ...customize[key], ...params[key] }
+                    else params[key] = customize[key]
+                }
+            })
+        }
+        return params
+    }
+
+    putCommand(customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand {
         const params: PutCommandInput = { TableName: this._config.tableName, Item: this.item() }
-        return new PutCommand({ ...params, ...customize })
+        return new PutCommand({ ...customize, ...params })
     }
 
-    getCommand(customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand | undefined {
+    getCommand(customize?: Omit<GetCommandInput, 'TableName' | 'Key'>): GetCommand {
         const params: GetCommandInput = { TableName: this._config.tableName, Key: this.key() }
-        return new GetCommand({ ...params, ...customize })
+        return new GetCommand({ ...customize, ...params })
     }
 
-    deleteCommand(customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand | undefined {
+    deleteCommand(customize?: Omit<DeleteCommandInput, 'TableName' | 'Key'>): DeleteCommand {
         const params: DeleteCommandInput = { TableName: this._config.tableName, Key: this.key() }
-        return new DeleteCommand({ ...params, ...customize })
+        return new DeleteCommand({ ...customize, ...params })
     }
 
+    queryCommand(customize?: QueryInput): QueryCommand {
+        return new QueryCommand(this.queryByPartitionKey(customize))
+    }
+
+    // TODO! remove soft delete command
+    // TODO! add this to update command as feature
     softDeleteCommand(isDeleted = true, customize?: SoftDeleteInput): UpdateCommand | undefined {
         if (!this._softDelete.length) {
             this._wrapError({
