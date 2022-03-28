@@ -41,10 +41,11 @@ export abstract class Dynamorph extends BaseClass {
 
     protected _data: Data = {}
 
-    constructor(config: ModelConfiguration, data: Data, profileName?: string) {
+    constructor(modelConfiguration: ModelConfiguration, data: Data, profileName?: string) {
         super(profileName)
 
-        this._config = ModelConfiguration.parse(config)
+        this._config = ModelConfiguration.parse(modelConfiguration)
+
         // TODO! validate data against schema (dynamically)
         this._data = data
 

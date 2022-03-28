@@ -1,6 +1,6 @@
 {
   "name": "dynamorph",
-  "version": "0.0.1",
+  "version": "0.0.2-development",
   "description": "a minimalist toolkit for aws dynamodb",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
