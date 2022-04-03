@@ -88,6 +88,10 @@ By default, it's undefined.
 This parameter provides a function to transform the value.
 By default, it's undefined.
 
+### Boolean
+
+Boolean type doesn't have other than common options.
+
 ### Soft Delete
 
 This is a special type to provide soft delete feature.
