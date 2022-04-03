@@ -17,6 +17,7 @@ export class TimestampType extends BaseClass {
     protected readonly _propertyName: string
     protected readonly _schema: TimestampAttribute
     protected _value: Date = new Date()
+    protected _changed: boolean = false
 
     constructor(propertyName: string, schema: TimestampAttribute, profileName?: string) {
         super(profileName)
@@ -25,6 +26,10 @@ export class TimestampType extends BaseClass {
         this._schema = TimestampAttribute.parse(schema)
 
         Object.setPrototypeOf(this, TimestampType.prototype)
+    }
+
+    get isChanged() {
+        return this._changed
     }
 
     get schema() {
@@ -51,8 +56,10 @@ export class TimestampType extends BaseClass {
     }
 
     setValue(value: Date | string | number = new Date()): boolean {
-        if (value instanceof Date) this._value = value
-        else if (typeof value === 'string') {
+        if (value instanceof Date) {
+            this._value = value
+            this._changed = true
+        } else if (typeof value === 'string') {
             if (this.schema.type !== Timestamp.Values.ISO_STRING)
                 return this._wrapError({
                     success: false,
@@ -67,14 +74,17 @@ export class TimestampType extends BaseClass {
                 })
 
             this._value = new Date(value)
+            this._changed = true
         } else if (typeof value === 'number') {
             switch (this._schema.type) {
                 case Timestamp.Values.MILLISECONDS: {
                     this._value = new Date(value)
+                    this._changed = true
                     break
                 }
                 case Timestamp.Values.SECONDS: {
                     this._value = new Date(value * 1000)
+                    this._changed = true
                     break
                 }
                 default:
@@ -90,7 +100,8 @@ export class TimestampType extends BaseClass {
                         ]),
                     })
             }
-        } else return this._wrapError({
+        } else
+            return this._wrapError({
                 success: false,
                 error: new ZodError([
                     {
@@ -100,16 +111,17 @@ export class TimestampType extends BaseClass {
                     },
                 ]),
             })
-        if (isNaN(this._value.getTime())) return this._wrapError({
-            success: false,
-            error: new ZodError([
-                {
-                    code: 'custom',
-                    path: [],
-                    message: 'Invalid date.',
-                },
-            ]),
-        })
+        if (isNaN(this._value.getTime()))
+            return this._wrapError({
+                success: false,
+                error: new ZodError([
+                    {
+                        code: 'custom',
+                        path: [],
+                        message: 'Invalid date.',
+                    },
+                ]),
+            })
         return true
     }
 }

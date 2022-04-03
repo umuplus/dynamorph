@@ -21,6 +21,7 @@ export class StringType extends BaseClass {
     protected readonly _schema: StringAttribute
     protected readonly _relatedAttributes: string[]
     protected _value: string | undefined = undefined
+    protected _changed: boolean = false
 
     constructor(propertyName: string, schema?: StringAttribute, profileName?: string) {
         super(profileName)
@@ -30,6 +31,10 @@ export class StringType extends BaseClass {
         this._relatedAttributes = this._schema.format ? findRelatedAttributes(this._schema.format) : []
 
         Object.setPrototypeOf(this, StringType.prototype)
+    }
+
+    get isChanged() {
+        return this._changed
     }
 
     get schema() {
@@ -159,7 +164,10 @@ export class StringType extends BaseClass {
         }
 
         const validation = this.validate(value)
-        if (validation) this._value = this._schema.transform ? this._schema.transform(value) : value
+        if (validation) {
+            this._value = this._schema.transform ? this._schema.transform(value) : value
+            this._changed = true
+        }
         return !this.hasErrors()
     }
 }

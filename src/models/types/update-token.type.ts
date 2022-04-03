@@ -11,6 +11,7 @@ export class UpdateTokenType extends BaseClass {
     protected readonly _propertyName: string
     protected readonly _schema: UpdateTokenAttribute
     protected _value: string | undefined = undefined
+    protected _changed: boolean = false
 
     constructor(propertyName: string, schema?: UpdateTokenAttribute, profileName?: string) {
         super(profileName)
@@ -19,6 +20,10 @@ export class UpdateTokenType extends BaseClass {
         this._schema = UpdateTokenAttribute.parse(schema || {})
 
         Object.setPrototypeOf(this, UpdateTokenType.prototype)
+    }
+
+    get isChanged() {
+        return this._changed
     }
 
     get schema() {
@@ -35,6 +40,7 @@ export class UpdateTokenType extends BaseClass {
 
     setValue(token?: string): boolean {
         this._value = token || generateRandomString(this._schema.length)
+        this._changed = true
         return true
     }
 }

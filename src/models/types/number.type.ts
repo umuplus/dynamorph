@@ -12,6 +12,7 @@ export class NumberType extends BaseClass {
     protected readonly _propertyName: string
     protected readonly _schema: NumberAttribute
     protected _value: number = NaN
+    protected _changed: boolean = false
 
     constructor(propertyName: string, schema?: NumberAttribute, profileName?: string) {
         super(profileName)
@@ -20,6 +21,10 @@ export class NumberType extends BaseClass {
         this._schema = NumberAttribute.parse(schema || {})
 
         Object.setPrototypeOf(this, NumberType.prototype)
+    }
+
+    get isChanged() {
+        return this._changed
     }
 
     get schema() {
@@ -32,7 +37,10 @@ export class NumberType extends BaseClass {
 
     setValue(value: number): boolean {
         const validation = this.validate(value)
-        if (validation) this._value = this._schema.transform ? this._schema.transform(value) : value
+        if (validation) {
+            this._value = this._schema.transform ? this._schema.transform(value) : value
+            this._changed = true
+        }
         return !this.hasErrors()
     }
 
