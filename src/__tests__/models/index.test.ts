@@ -129,12 +129,12 @@ test('basic model', () => {
     const queryCommandCustom = user.queryCommand({ ScanIndexForward: false })
     expect(queryCommandCustom?.input.ScanIndexForward).toEqual(false)
 
-    // * Soft Delete via UpdateCommand
-    const softDeleteCommand = user.softDeleteCommand()
-    expect(softDeleteCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_dat = :_dat, #_token = :_token')
-    expect(softDeleteCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
-    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(true)
-    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(
-        softDeleteCommand?.input.ExpressionAttributeValues?.[':_token'],
-    )
+    // // * Soft Delete via UpdateCommand
+    // const softDeleteCommand = user.softDeleteCommand()
+    // expect(softDeleteCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_dat = :_dat, #_token = :_token')
+    // expect(softDeleteCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
+    // expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(true)
+    // expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(
+    //     softDeleteCommand?.input.ExpressionAttributeValues?.[':_token'],
+    // )
 })

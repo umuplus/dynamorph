@@ -15,11 +15,8 @@ import { ZodError } from 'zod'
 
 export type CompositeKey = { [key: string]: NativeAttributeValue }
 export type Data = Record<string, any>
-export type SoftDeleteInput = Omit<
-    UpdateCommandInput,
-    'TableName' | 'Key' | 'UpdateExpression' | 'ConditionExpression' | 'ExpressionAttributeNames' | 'ExpressionAttributeValues'
->
 export type QueryInput = Omit<QueryCommandInput, 'TableName' | 'AttributesToGet' | 'KeyConditions' | 'QueryFilter' | 'ConditionalOperator'>
+export type UpdateInput = Omit<UpdateCommandInput, 'TableName' | 'Key' | 'AttributeUpdates' | 'Expected' | 'ConditionalOperator'>
 
 export abstract class Dynamorph extends BaseClass {
     protected readonly _config: ModelConfiguration
@@ -171,24 +168,24 @@ export abstract class Dynamorph extends BaseClass {
             ExpressionAttributeNames: { [`#${partitionKeyName}`]: partitionKeyName },
             ExpressionAttributeValues: { [`:${partitionKeyName}`]: partitionKeyValue },
         }
-        if (customize) {
-            Object.keys(customize).forEach((key) => {
-                if (typeof customize[key] === 'boolean' || typeof customize[key] === 'number') params[key] = customize[key]
-                else if (typeof customize[key] === 'string') {
-                    if (typeof params[key] === 'string') params[key] += ' ' + customize[key]
-                    else params[key] = customize[key]
-                }
-                else if (Array.isArray(customize[key])) {
-                    if (Array.isArray(params[key])) params[key].push(...customize[key])
-                    else params[key] = customize[key]
-                }
-                else if (customize[key] && typeof customize[key] === 'object') {
-                    if (typeof params[key] === 'object') params[key] = { ...customize[key], ...params[key] }
-                    else params[key] = customize[key]
-                }
-            })
-        }
-        return params
+        return this.mergeCommands(params, customize || {})
+    }
+
+    mergeCommands<T>(cmd: T, customize: Record<string, any>): T {
+        return Object.keys(customize).reduce((params, key) => {
+            if (typeof customize[key] === 'boolean' || typeof customize[key] === 'number') params[key] = customize[key]
+            else if (typeof customize[key] === 'string') {
+                if (typeof params[key] === 'string') params[key] += ' ' + customize[key]
+                else params[key] = customize[key]
+            } else if (Array.isArray(customize[key])) {
+                if (Array.isArray(params[key])) params[key].push(...customize[key])
+                else params[key] = customize[key]
+            } else if (customize[key] && typeof customize[key] === 'object') {
+                if (typeof params[key] === 'object') params[key] = { ...customize[key], ...params[key] }
+                else params[key] = customize[key]
+            }
+            return params
+        }, cmd)
     }
 
     putCommand(customize?: Omit<PutCommandInput, 'TableName' | 'Item'>): PutCommand {
@@ -210,39 +207,34 @@ export abstract class Dynamorph extends BaseClass {
         return new QueryCommand(this.queryByPartitionKey(customize))
     }
 
-    // TODO! remove soft delete command
-    // TODO! add this to update command as feature
-    softDeleteCommand(isDeleted = true, customize?: SoftDeleteInput): UpdateCommand | undefined {
-        if (!this._softDelete.length) {
-            this._wrapError({
-                success: false,
-                error: new ZodError([
-                    {
-                        code: 'custom',
-                        path: [],
-                        message: 'Format does not match',
-                    },
-                ]),
-            })
-            return undefined
-        }
+    markAsDeleted(): void {
+        this._softDelete.forEach((type) => type.setValue(true))
+        this._deletedAt.forEach((type) => type.setValue())
+    }
 
+    markAsRestored(): void {
+        this._softDelete.forEach((type) => type.setValue(false))
+        this._updatedAt.forEach((type) => type.setValue())
+    }
+
+    updateCommand(customize?: UpdateInput): UpdateCommand | undefined {
         const conditionExpression: string[] = []
 
         const updateExpression: string[] = []
         const ExpressionAttributeNames: Record<string, string> = {}
         const ExpressionAttributeValues: Record<string, any> = {}
 
-        this._softDelete.forEach((type) => {
-            if (type instanceof SoftDeleteType) {
-                const fieldName = type.schema.fieldName || type.propertyName
-                updateExpression.push(`#${fieldName} = :${fieldName}`)
-                ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
-            }
-        })
+        const isDeleted = this._softDelete.filter((type) => type.isChanged).some((type) => type.getValue())
         if (isDeleted) {
-            this._deletedAt.forEach((type) => {
+            this._softDelete.filter((type) => type.isChanged).forEach((type) => {
+                if (type instanceof SoftDeleteType) {
+                    const fieldName = type.schema.fieldName || type.propertyName
+                    updateExpression.push(`#${fieldName} = :${fieldName}`)
+                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                    ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
+                }
+            })
+            this._deletedAt.filter((type) => type.isChanged).forEach((type) => {
                 if (type instanceof TimestampType) {
                     if (type.setValue(new Date())) {
                         const fieldName = type.schema.fieldName || type.propertyName
@@ -253,7 +245,7 @@ export abstract class Dynamorph extends BaseClass {
                 }
             })
         } else {
-            this._updatedAt.forEach((type) => {
+            this._updatedAt.filter((type) => type.isChanged).forEach((type) => {
                 if (type instanceof TimestampType) {
                     if (type.setValue(new Date())) {
                         const fieldName = type.schema.fieldName || type.propertyName
