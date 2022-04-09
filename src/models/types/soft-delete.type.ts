@@ -19,6 +19,10 @@ export class SoftDeleteType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -31,9 +35,9 @@ export class SoftDeleteType extends BaseClass {
         return this._value
     }
 
-    setValue(isDeleted?: boolean): boolean {
+    setValue(isDeleted?: boolean, ignoreChanged?: boolean): boolean {
         this._value = !!isDeleted
-        this._changed = true
+        this._changed = !ignoreChanged
         return true
     }
 }

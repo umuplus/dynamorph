@@ -1,3 +1,5 @@
+import { BooleanType } from './types/boolean.type'
+import { NumberType } from './types/number.type'
 import { SoftDeleteType } from './types/soft-delete.type'
 import { StringType } from './types/string.type'
 import { TimestampType } from './types/timestamp.type'
@@ -5,6 +7,8 @@ import { UpdateTokenType } from './types/update-token.type'
 import { z } from 'zod'
 
 export const AllTypesTogether = z.union([
+    z.instanceof(BooleanType),
+    z.instanceof(NumberType),
     z.instanceof(StringType),
     z.instanceof(SoftDeleteType),
     z.instanceof(TimestampType),
@@ -16,11 +20,10 @@ export const Schema = AllTypesTogether.array().min(1)
 export type Schema = z.infer<typeof Schema>
 
 export const ModelConfiguration = z.object({
-    modelName: z.string().min(1),
     tableName: z.string().min(1),
     schema: Schema.refine(
         (schema) => {
-            const properties = new Set(schema.map((type) => type.schema.fieldName))
+            const properties = new Set(schema.map((type) => type.schema.fieldName || type.propertyName))
             return schema.length === properties.size
         },
         {

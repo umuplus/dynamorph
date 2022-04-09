@@ -20,6 +20,10 @@ export class BooleanType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -28,11 +32,11 @@ export class BooleanType extends BaseClass {
         return this._propertyName
     }
 
-    setValue(value: boolean): boolean {
+    setValue(value: boolean, ignoreChanged?: boolean): boolean {
         const validation = this.validate(value)
         if (validation) {
             this._value = !!value
-            this._changed = true
+            this._changed = !ignoreChanged
         }
         return !this.hasErrors()
     }

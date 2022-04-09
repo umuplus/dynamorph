@@ -32,6 +32,10 @@ export class TimestampType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -55,10 +59,10 @@ export class TimestampType extends BaseClass {
         }
     }
 
-    setValue(value: Date | string | number = new Date()): boolean {
+    setValue(value: Date | string | number = new Date(), ignoreChanged?: boolean): boolean {
         if (value instanceof Date) {
             this._value = value
-            this._changed = true
+            this._changed = !ignoreChanged
         } else if (typeof value === 'string') {
             if (this.schema.type !== Timestamp.Values.ISO_STRING)
                 return this._wrapError({
@@ -74,17 +78,17 @@ export class TimestampType extends BaseClass {
                 })
 
             this._value = new Date(value)
-            this._changed = true
+            this._changed = !ignoreChanged
         } else if (typeof value === 'number') {
             switch (this._schema.type) {
                 case Timestamp.Values.MILLISECONDS: {
                     this._value = new Date(value)
-                    this._changed = true
+                    this._changed = !ignoreChanged
                     break
                 }
                 case Timestamp.Values.SECONDS: {
                     this._value = new Date(value * 1000)
-                    this._changed = true
+                    this._changed = !ignoreChanged
                     break
                 }
                 default:

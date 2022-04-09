@@ -27,6 +27,10 @@ export class NumberType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -35,11 +39,11 @@ export class NumberType extends BaseClass {
         return this._propertyName
     }
 
-    setValue(value: number): boolean {
+    setValue(value: number, ignoreChanged?: boolean): boolean {
         const validation = this.validate(value)
         if (validation) {
             this._value = this._schema.transform ? this._schema.transform(value) : value
-            this._changed = true
+            this._changed = !ignoreChanged
         }
         return !this.hasErrors()
     }

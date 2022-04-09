@@ -37,6 +37,10 @@ export class StringType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -49,9 +53,9 @@ export class StringType extends BaseClass {
         return !!this._relatedAttributes.length
     }
 
-    setValue(value: string | Record<string, any>): boolean {
+    setValue(value: string | Record<string, any>, ignoreChanged?: boolean): boolean {
         if (typeof value === 'string') {
-            if (!this.hasFormat()) return this._setValue(value)
+            if (!this.hasFormat()) return this._setValue(value, false, ignoreChanged)
             return this._wrapError({
                 success: false,
                 error: new ZodError([
@@ -76,7 +80,7 @@ export class StringType extends BaseClass {
         })
     }
 
-    protected _applyFormat(data: Record<string, any>): boolean {
+    protected _applyFormat(data: Record<string, any>, ignoreChanged?: boolean): boolean {
         if (!this._schema.format) return false
 
         const value = applyFormat(
@@ -86,7 +90,7 @@ export class StringType extends BaseClass {
                 return final
             }, {}),
         )
-        return this._setValue(value, true)
+        return this._setValue(value, true, ignoreChanged)
     }
 
     getValue() {
@@ -148,7 +152,7 @@ export class StringType extends BaseClass {
         return !this.hasErrors()
     }
 
-    private _setValue(value: string, force?: boolean): boolean {
+    private _setValue(value: string, force?: boolean, ignoreChanged?: boolean): boolean {
         if (!force && this._schema.format) {
             this._wrapError({
                 success: false,
@@ -166,7 +170,7 @@ export class StringType extends BaseClass {
         const validation = this.validate(value)
         if (validation) {
             this._value = this._schema.transform ? this._schema.transform(value) : value
-            this._changed = true
+            this._changed = !ignoreChanged
         }
         return !this.hasErrors()
     }

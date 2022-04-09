@@ -26,6 +26,10 @@ export class UpdateTokenType extends BaseClass {
         return this._changed
     }
 
+    set changed(val: boolean) {
+        this._changed = !!val
+    }
+
     get schema() {
         return this._schema
     }
@@ -38,9 +42,9 @@ export class UpdateTokenType extends BaseClass {
         return this._value
     }
 
-    setValue(token?: string): boolean {
+    setValue(token?: string, ignoreChanged?: boolean): boolean {
         this._value = token || generateRandomString(this._schema.length)
-        this._changed = true
+        this._changed = !ignoreChanged
         return true
     }
 }
