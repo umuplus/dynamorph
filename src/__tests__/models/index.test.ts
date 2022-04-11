@@ -1,21 +1,25 @@
-import { Dynamorph, Data } from '../..'
+import { BooleanType } from '../../models/types/boolean.type'
+import { config } from '../../utils/configuration'
+import { Data, Dynamorph } from '../..'
+import { NumberType } from '../../models/types/number.type'
 import { SoftDeleteType } from '../../models/types/soft-delete.type'
 import { StringType } from '../../models/types/string.type'
 import { Timestamp, TimestampOn, TimestampType } from '../../models/types/timestamp.type'
 import { UpdateTokenType } from '../../models/types/update-token.type'
-import { config } from '../../utils/configuration'
 
 class User extends Dynamorph {
     constructor(data: Data) {
         super(
+            'User',
             {
-                modelName: 'User',
                 tableName: 'MyUserTable',
                 schema: [
                     new StringType('part', { partitionKey: true, fieldName: 'pk', format: 'ID#{userId}' }),
                     new StringType('sort', { sortKey: true, fieldName: 'sk' }),
 
                     new StringType('userId', { ignore: true }),
+                    new BooleanType('isAdmin'),
+                    new NumberType('age'),
 
                     new TimestampType('createdAt', {
                         on: TimestampOn.Values.CREATE,
@@ -47,16 +51,34 @@ test('redefining attributes is wrong', () => {
     class InvalidUser extends Dynamorph {
         constructor(data: Data) {
             super(
+                'MyInvalidUserModel',
                 {
-                    modelName: 'InvalidUser',
                     tableName: 'MyUserTable',
-                    schema: [new StringType('userId', { ignore: true }), new StringType('id', { ignore: true })],
+                    schema: [
+                        new StringType('userId', { fieldName: 'id', ignore: true }),
+                        new StringType('personId', { fieldName: 'id', ignore: true }),
+                    ],
                 },
                 data,
             )
         }
     }
     expect(() => new InvalidUser({})).toThrow('You cannot redefine attributes.')
+})
+
+test('partition key is required', () => {
+    class InvalidUser extends Dynamorph {
+        constructor(data: Data) {
+            super(
+                'MyInvalidUserModel',
+                {
+                    tableName: 'MyUserTable',
+                    schema: [new StringType('userId', { fieldName: 'id', ignore: true })],
+                },
+                data,
+            )
+        }
+    }
     expect(() => new InvalidUser({})).toThrow('You can have only one partition key and one optional sort key.')
 })
 
@@ -80,7 +102,7 @@ test('manage attributes dynamically', () => {
 
 test('basic model', () => {
     config.update({ safe: false, delimiter: '#' })
-    const data = { userId: 'USER01', sort: 'SORT_KEY' }
+    const data = { userId: 'USER01', sort: 'SORT_KEY', isAdmin: true, age: Math.floor(Math.random() * 10) + 20 }
     const user = new User(data)
 
     const key = user.key()
@@ -95,6 +117,8 @@ test('basic model', () => {
     expect(!isNaN(new Date(putCommand?.input.Item?._cat).getTime())).toEqual(true)
     expect(putCommand?.input.Item?._isd).toEqual(false)
     expect(putCommand?.input.Item?._token.length).toEqual(6)
+    expect(putCommand?.input.Item?.isAdmin).toEqual(data.isAdmin)
+    expect(putCommand?.input.Item?.age).toEqual(data.age)
 
     const putCommandCustom = user.putCommand({ ConditionExpression: '#invalid = :invalid' })
     expect(putCommandCustom?.input.ConditionExpression).toEqual('#invalid = :invalid')
@@ -129,12 +153,23 @@ test('basic model', () => {
     const queryCommandCustom = user.queryCommand({ ScanIndexForward: false })
     expect(queryCommandCustom?.input.ScanIndexForward).toEqual(false)
 
-    // // * Soft Delete via UpdateCommand
-    // const softDeleteCommand = user.softDeleteCommand()
-    // expect(softDeleteCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_dat = :_dat, #_token = :_token')
-    // expect(softDeleteCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
-    // expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(true)
-    // expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(
-    //     softDeleteCommand?.input.ExpressionAttributeValues?.[':_token'],
-    // )
+    // * SoftDelete via UpdateCommand
+    user.markAsDeleted()
+    const softDeleteCommand = user.updateCommand()
+    expect(softDeleteCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_dat = :_dat, #_token = :_token')
+    expect(softDeleteCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
+    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(true)
+    expect(softDeleteCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(
+        softDeleteCommand?.input.ExpressionAttributeValues?.[':_token'],
+    )
+
+    // * Restore SoftDeleted Record via UpdateCommand
+    user.markAsRestored()
+    const softRestoreCommand = user.updateCommand()
+    expect(softRestoreCommand?.input.UpdateExpression).toEqual('SET #_isd = :_isd, #_uat = :_uat, #_token = :_token')
+    expect(softRestoreCommand?.input.ConditionExpression).toEqual('#ce__token = :ce__token')
+    expect(softRestoreCommand?.input.ExpressionAttributeValues?.[':_isd']).toEqual(false)
+    expect(softRestoreCommand?.input.ExpressionAttributeValues?.[':ce__token']).not.toEqual(
+        softRestoreCommand?.input.ExpressionAttributeValues?.[':_token'],
+    )
 })

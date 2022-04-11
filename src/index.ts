@@ -12,6 +12,7 @@ import { TimestampOn, TimestampType } from './models/types/timestamp.type'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
 import { UpdateTokenType } from './models/types/update-token.type'
 import { ZodError } from 'zod'
+import { BooleanType } from './models/types/boolean.type'
 
 export type CompositeKey = { [key: string]: NativeAttributeValue }
 export type Data = Record<string, any>
@@ -19,6 +20,7 @@ export type QueryInput = Omit<QueryCommandInput, 'TableName' | 'AttributesToGet'
 export type UpdateInput = Omit<UpdateCommandInput, 'TableName' | 'Key' | 'AttributeUpdates' | 'Expected' | 'ConditionalOperator'>
 
 export abstract class Dynamorph extends BaseClass {
+    protected readonly _modelName: string
     protected readonly _config: ModelConfiguration
 
     // * main attributes
@@ -38,10 +40,11 @@ export abstract class Dynamorph extends BaseClass {
 
     protected _data: Data = {}
 
-    constructor(modelConfiguration: ModelConfiguration, data: Data, profileName?: string) {
+    constructor(modelName: string, modelConfiguration: ModelConfiguration, data: Data, profileName?: string) {
         super(profileName)
 
         this._config = ModelConfiguration.parse(modelConfiguration)
+        this._modelName = modelName
 
         // TODO! validate data against schema (dynamically)
         this._data = data
@@ -50,7 +53,7 @@ export abstract class Dynamorph extends BaseClass {
         this._partitionKey = this._config.schema.find((type) => {
             const key = type.propertyName
             if (type.schema.partitionKey && type instanceof StringType) {
-                if (!type.setValue(type.hasFormat() ? this._data : this._data[key])) {
+                if (!type.setValue(type.hasFormat() ? this._data : this._data[key], true)) {
                     this._wrapError({ success: false, error: type.getErrors() })
                     return false
                 }
@@ -74,21 +77,24 @@ export abstract class Dynamorph extends BaseClass {
         this._config.schema.forEach((type) => {
             const fieldName = type.schema.fieldName || type.propertyName
             if (type instanceof SoftDeleteType) {
-                type.setValue(this._data[fieldName] || this._data[type.propertyName])
+                type.setValue(this._data[fieldName] || this._data[type.propertyName], true)
                 this._softDelete.push(type)
             } else if (type instanceof UpdateTokenType) {
-                type.setValue(this._data[fieldName] || this._data[type.propertyName])
+                type.setValue(this._data[fieldName] || this._data[type.propertyName], true)
                 this._updateToken.push(type)
             } else if (type instanceof TimestampType) {
                 type.setValue(this._data[fieldName] || this._data[type.propertyName])
                 if (type.schema['on'] === TimestampOn.Values.CREATE) this._createdAt.push(type)
                 else if (type.schema['on'] === TimestampOn.Values.UPDATE) this._updatedAt.push(type)
                 else if (type.schema['on'] === TimestampOn.Values.DELETE) this._deletedAt.push(type)
+            } else if (type instanceof BooleanType) {
+                const val = typeof this._data[fieldName] === 'boolean' ? this._data[fieldName] : !!this._data[type.propertyName]
+                if (!type.setValue(val, true)) this._wrapError({ success: false, error: type.getErrors() })
             } else if (type instanceof NumberType) {
-                if (!type.setValue(this._data[this._data[fieldName] || this._data[type.propertyName]]))
-                    this._wrapError({ success: false, error: type.getErrors() })
+                const val = typeof this._data[fieldName] === 'number' ? this._data[fieldName] : this._data[type.propertyName]
+                if (!type.setValue(val, true)) this._wrapError({ success: false, error: type.getErrors() })
             } else if (type instanceof StringType) {
-                if (!type.setValue(type.hasFormat() ? this._data : this._data[fieldName] || this._data[type.propertyName]))
+                if (!type.setValue(type.hasFormat() ? this._data : this._data[fieldName] || this._data[type.propertyName], true))
                     this._wrapError({ success: false, error: type.getErrors() })
 
                 if (!this._sortKey && type.schema.sortKey) this._sortKey = type
@@ -159,6 +165,17 @@ export abstract class Dynamorph extends BaseClass {
         return item
     }
 
+    updateData(data: Record<string, any>) {
+        Object.keys(data).forEach((key) => {
+            const type = this._config.schema.find((t) => (t.schema.fieldName || t.propertyName) === key)
+            if (!type) return
+
+            if (type instanceof BooleanType) type.setValue(data[key])
+            else if (type instanceof NumberType) type.setValue(data[key])
+            else if (type instanceof StringType) type.setValue(data[key])
+        })
+    }
+
     queryByPartitionKey(customize?: QueryInput): QueryCommandInput {
         const partitionKeyName = this._partitionKey.schema.fieldName || this._partitionKey.propertyName
         const partitionKeyValue = this._partitionKey.getValue()
@@ -226,35 +243,51 @@ export abstract class Dynamorph extends BaseClass {
 
         const isDeleted = this._softDelete.filter((type) => type.isChanged).some((type) => type.getValue())
         if (isDeleted) {
-            this._softDelete.filter((type) => type.isChanged).forEach((type) => {
-                if (type instanceof SoftDeleteType) {
-                    const fieldName = type.schema.fieldName || type.propertyName
-                    updateExpression.push(`#${fieldName} = :${fieldName}`)
-                    ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                    ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
-                }
-            })
-            this._deletedAt.filter((type) => type.isChanged).forEach((type) => {
-                if (type instanceof TimestampType) {
-                    if (type.setValue(new Date())) {
+            this._softDelete
+                .filter((type) => type.isChanged)
+                .forEach((type) => {
+                    if (type instanceof SoftDeleteType) {
                         const fieldName = type.schema.fieldName || type.propertyName
                         updateExpression.push(`#${fieldName} = :${fieldName}`)
                         ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                        ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
-                    } else this._wrapError({ success: false, error: type.getErrors() })
-                }
-            })
+                        ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
+                    }
+                })
+            this._deletedAt
+                .filter((type) => type.isChanged)
+                .forEach((type) => {
+                    if (type instanceof TimestampType) {
+                        if (type.setValue(new Date())) {
+                            const fieldName = type.schema.fieldName || type.propertyName
+                            updateExpression.push(`#${fieldName} = :${fieldName}`)
+                            ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                            ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                        } else this._wrapError({ success: false, error: type.getErrors() })
+                    }
+                })
         } else {
-            this._updatedAt.filter((type) => type.isChanged).forEach((type) => {
-                if (type instanceof TimestampType) {
-                    if (type.setValue(new Date())) {
+            this._softDelete
+                .filter((type) => type.isChanged)
+                .forEach((type) => {
+                    if (type instanceof SoftDeleteType) {
                         const fieldName = type.schema.fieldName || type.propertyName
                         updateExpression.push(`#${fieldName} = :${fieldName}`)
                         ExpressionAttributeNames[`#${fieldName}`] = fieldName
-                        ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
-                    } else this._wrapError({ success: false, error: type.getErrors() })
-                }
-            })
+                        ExpressionAttributeValues[`:${fieldName}`] = !!isDeleted
+                    }
+                })
+            this._updatedAt
+                .filter((type) => type.isChanged)
+                .forEach((type) => {
+                    if (type instanceof TimestampType) {
+                        if (type.setValue(new Date())) {
+                            const fieldName = type.schema.fieldName || type.propertyName
+                            updateExpression.push(`#${fieldName} = :${fieldName}`)
+                            ExpressionAttributeNames[`#${fieldName}`] = fieldName
+                            ExpressionAttributeValues[`:${fieldName}`] = type.getValue()
+                        } else this._wrapError({ success: false, error: type.getErrors() })
+                    }
+                })
         }
 
         this._updateToken.forEach((type) => {
