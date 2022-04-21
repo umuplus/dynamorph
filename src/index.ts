@@ -40,14 +40,14 @@ export abstract class Dynamorph extends BaseClass {
 
     protected _data: Data = {}
 
-    constructor(modelName: string, modelConfiguration: ModelConfiguration, data: Data, profileName?: string) {
+    constructor(modelName: string, modelConfiguration: ModelConfiguration, initialData?: Data, profileName?: string) {
         super(profileName)
 
         this._config = ModelConfiguration.parse(modelConfiguration)
         this._modelName = modelName
 
         // TODO! validate data against schema (dynamically)
-        this._data = data
+        if (initialData) this._data = initialData
 
         // * partition key
         this._partitionKey = this._config.schema.find((type) => {
@@ -176,18 +176,6 @@ export abstract class Dynamorph extends BaseClass {
         })
     }
 
-    queryByPartitionKey(customize?: QueryInput): QueryCommandInput {
-        const partitionKeyName = this._partitionKey.schema.fieldName || this._partitionKey.propertyName
-        const partitionKeyValue = this._partitionKey.getValue()
-        const params: QueryCommandInput = {
-            TableName: this._config.tableName,
-            KeyConditionExpression: `#${partitionKeyName} = :${partitionKeyName}`,
-            ExpressionAttributeNames: { [`#${partitionKeyName}`]: partitionKeyName },
-            ExpressionAttributeValues: { [`:${partitionKeyName}`]: partitionKeyValue },
-        }
-        return this.mergeCommands(params, customize || {})
-    }
-
     mergeCommands<T>(cmd: T, customize: Record<string, any>): T {
         return Object.keys(customize).reduce((params, key) => {
             if (typeof customize[key] === 'boolean' || typeof customize[key] === 'number') params[key] = customize[key]
@@ -221,7 +209,15 @@ export abstract class Dynamorph extends BaseClass {
     }
 
     queryCommand(customize?: QueryInput): QueryCommand {
-        return new QueryCommand(this.queryByPartitionKey(customize))
+        const partitionKeyName = this._partitionKey.schema.fieldName || this._partitionKey.propertyName
+        const partitionKeyValue = this._partitionKey.getValue()
+        const params: QueryCommandInput = {
+            TableName: this._config.tableName,
+            KeyConditionExpression: `#${partitionKeyName} = :${partitionKeyName}`,
+            ExpressionAttributeNames: { [`#${partitionKeyName}`]: partitionKeyName },
+            ExpressionAttributeValues: { [`:${partitionKeyName}`]: partitionKeyValue },
+        }
+        return new QueryCommand(this.mergeCommands(params, customize || {}))
     }
 
     markAsDeleted(): void {
@@ -315,7 +311,7 @@ export abstract class Dynamorph extends BaseClass {
             ExpressionAttributeNames,
             ExpressionAttributeValues,
         }
-        return new UpdateCommand({ ...params, ...customize })
+        return new UpdateCommand(this.mergeCommands(params, customize || {}))
     }
 }
 
