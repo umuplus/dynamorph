@@ -13,6 +13,15 @@ test('a simple required number attribute', (t) => {
     t.is(attribute.changed, true)
 })
 
+test('input converted to number via transform', (t) => {
+    // TODO? transform first, then validate maybe?
+    const attribute = new NumberType({ gte: 0, lte: 1, transform: () => Math.random() })
+    attribute.value = undefined
+    t.is(attribute.error, undefined)
+    t.is(attribute.value === undefined, false)
+    t.is(attribute.changed, true)
+})
+
 test('a simple number attribute', (t) => {
     const attribute = new NumberType({ gte: 1, lte: 10 })
     attribute.value = undefined

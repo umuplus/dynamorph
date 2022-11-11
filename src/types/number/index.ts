@@ -48,7 +48,7 @@ export class NumberType extends BaseType {
             else this._error = error
         } else {
             if (this._options.transform) v = this._options.transform(v)
-            if (typeof v !== 'undefined' && this._value !== v) {
+            if (this._value !== v) {
                 this._changed = true
                 this._value = v
             }
