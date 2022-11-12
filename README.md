@@ -74,6 +74,7 @@ type BooleanBaseType = Omit<Attribute, 'type'>
 interface BooleanOptions extends BooleanBaseType {
     validate?: (v: boolean | undefined) => string | undefined
     transform?: (v: boolean | undefined) => boolean | undefined
+    default?: () => boolean
 }
 ```
 
@@ -88,6 +89,7 @@ interface BooleanOptions extends BooleanBaseType {
 const attribute = new BooleanType({
     validate: (v: boolean | undefined) => (!v ? 'value must be true always' : undefined),
     transform: (v: boolean | undefined) => !!v,
+    default: () => true
 })
 attribute.value = true
 ```
@@ -110,6 +112,7 @@ interface NumberOptions extends NumberBaseType {
     int?: boolean
     validate?: (v: number | undefined) => string | undefined
     transform?: (v: number | undefined) => number | undefined
+    default?: () => number
 }
 ```
 
@@ -136,6 +139,7 @@ const attribute = new NumberType({
     int: true,
     validate: (v: number | undefined) => (v % 2 ? 'value must be a even number' : undefined),
     transform: (v: number | undefined) => v * v,
+    default: () => Math.random(),
 })
 attribute.value = 10
 ```
@@ -163,6 +167,7 @@ interface StringOptions extends StringBaseType {
     // TODO! enum?: string[]
     validate?: (v: string | undefined) => string | undefined
     transform?: (v: string | undefined) => string | undefined
+    default?: () => string
     mode?: StringMode
     format?: string
 }
@@ -189,6 +194,7 @@ const attribute = new StringType({
     regex: /TEST/gi,
     validate: (v: string | undefined) => (v.includes('forbidden') ? 'value cannot contain the word "forbidden"' : undefined),
     transform: (v: string | undefined) => v.toUpperCase(),
+    default: () => '?'
 })
 attribute.value = 'test'
 
@@ -200,4 +206,48 @@ const attribute2 = new StringType({
     format: '{username}@{domain}',
 })
 attribute2.value = { username: 'info', domain: 'example.com' }
+```
+
+### List
+
+This type is for defining attributes to store string values.
+
+**Options:**
+
+```typescript
+type ListBaseType = Omit<Attribute, 'type'>
+
+export interface ListOptions extends ListBaseType {
+    min?: number
+    max?: number
+    length?: number
+    validate?: (v: any[] | undefined) => string | undefined
+    transform?: (v: any[] | undefined) => any[] | undefined
+    default?: () => any[]
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| min           | number              | false               | Checks length of the value is not less than the provided number
+| max           | number              | false               | Checks length of the value is not greater than the provided number
+| length        | number              | false               | Checks length of the value is equal to the provided number
+| regex         | RegExp              | false               | Checks the value is matches with the provided regular expression
+| validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
+| transform     | Function            | false               | A custom function to overwrite the value
+| mode          | StringMode          | false               | Checks the value matches with the pre-defined mode
+| format        | string              | false               | Determines the format of the value
+
+**Usages:**
+
+```typescript
+const attribute = new ListType({
+    min: 1,
+    max: 5,
+    length: 3,
+    validate: (v: any[] | undefined) => (v.length % 2 ? 'number of items in the value must be even' : undefined),
+    transform: (v: any[] | undefined) => v.map(k => k?.toUpperCase() || k),
+    default: () => [],
+})
+attribute.value = ['a', 'b', 'c']
 ```
