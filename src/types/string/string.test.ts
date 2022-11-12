@@ -6,39 +6,29 @@ import { StringMode, StringType } from '.'
 test.before(() => silent(true))
 
 test('a simple string attribute', (t) => {
-    const attribute = new StringType({
-        fieldName: '_ID',
-        min: 1,
-        max: 10,
-        required: true,
-        partitionKey: true,
-    })
+    const attribute = new StringType({ fieldName: '_ID', min: 1, max: 10, required: true, partitionKey: true })
     attribute.value = 'test1'
     t.is(attribute.fieldName, '_ID')
     t.is(attribute.value, 'test1')
     t.is(attribute.changed, true)
 })
 
+test('a simple string attribute with default', (t) => {
+    const attribute = new StringType({ default: () => 'test' })
+    attribute.value = undefined
+    t.is(`${attribute.value}`, 'test')
+    t.is(attribute.changed, true)
+})
+
 test('an email attribute', (t) => {
-    const attribute = new StringType({
-        min: 1,
-        max: 10,
-        required: true,
-        mode: StringMode.EMAIL,
-        partitionKey: true,
-    })
+    const attribute = new StringType({ min: 1, max: 10, required: true, mode: StringMode.EMAIL, partitionKey: true })
     attribute.value = 'test1@t.co'
     t.is(attribute.value, 'test1@t.co')
     t.is(attribute.changed, true)
 })
 
 test('transform can overwrites the value of a string attribute', (t) => {
-    const attribute = new StringType({
-        min: 1,
-        max: 10,
-        required: true,
-        transform: (v) => v?.toUpperCase(),
-    })
+    const attribute = new StringType({ min: 1, max: 10, required: true, transform: (v) => v?.toUpperCase() })
     attribute.value = 'test1'
     t.is(attribute.value, 'TEST1')
     t.is(attribute.changed, true)
@@ -58,12 +48,7 @@ test('custom validator fails for a string attribute', (t) => {
 })
 
 test('cannot assign out of range value to a string attribute', (t) => {
-    const attribute = new StringType({
-        min: 1,
-        max: 3,
-        length: 2,
-        required: true,
-    })
+    const attribute = new StringType({ min: 1, max: 3, length: 2, required: true })
     attribute.value = 'test1'
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
@@ -85,13 +70,7 @@ test('cannot assign out of range value to a string attribute', (t) => {
 
 test('a simply formatted string attribute', (t) => {
     const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
-    const attribute = new StringType({
-        format: '{userId}#USR_ADR#{addressId}',
-        min: 1,
-        max: 250,
-        required: true,
-        partitionKey: true,
-    })
+    const attribute = new StringType({ format: '{userId}#USR_ADR#{addressId}', min: 1, max: 250 })
     attribute.value = data
     t.is(attribute.format, '{userId}#USR_ADR#{addressId}')
     t.deepEqual(attribute.compositeAttributes, ['userId', 'addressId'])
@@ -100,11 +79,7 @@ test('a simply formatted string attribute', (t) => {
 })
 
 test('cannot assign string to formatted string attribute', (t) => {
-    const attribute = new StringType({
-        format: '{userId}#USR_ADR#{addressId}',
-        min: 1,
-        max: 250,
-    })
+    const attribute = new StringType({ format: '{userId}#USR_ADR#{addressId}', min: 1, max: 250 })
     attribute.value = 'test1'
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
@@ -120,10 +95,7 @@ test('cannot assign string to formatted string attribute', (t) => {
 
 test('cannot assign object to non-formatted string attribute', (t) => {
     const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
-    const attribute = new StringType({
-        min: 1,
-        max: 250,
-    })
+    const attribute = new StringType({ min: 1, max: 250 })
     attribute.value = data
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [

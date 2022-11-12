@@ -20,6 +20,7 @@ export interface StringOptions extends StringBaseType {
     // TODO! enum?: string[]
     validate?: (v: string | undefined) => string | undefined
     transform?: (v: string | undefined) => string | undefined
+    default?: () => string
     mode?: StringMode
     format?: string
 }
@@ -92,6 +93,7 @@ export class StringType extends BaseType {
             else this._error = error
         } else {
             if (this._options.transform) value = this._options.transform(value)
+            if (this._options.default && value === undefined) value = this._options.default()
             if (this._value !== value) {
                 this._changed = true
                 this._value = value

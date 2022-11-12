@@ -7,6 +7,7 @@ type BooleanBaseType = Omit<Attribute, 'type'>
 export interface BooleanOptions extends BooleanBaseType {
     validate?: (v: boolean | undefined) => string | undefined
     transform?: (v: boolean | undefined) => boolean | undefined
+    default?: () => boolean
 }
 
 export class BooleanType extends BaseType {
@@ -43,6 +44,7 @@ export class BooleanType extends BaseType {
             else this._error = error
         } else {
             if (this._options.transform) v = this._options.transform(v)
+            if (this._options.default && v === undefined) v = this._options.default()
             if (this._value !== v) {
                 this._changed = true
                 this._value = v

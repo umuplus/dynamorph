@@ -14,6 +14,7 @@ export interface NumberOptions extends NumberBaseType {
     int?: boolean
     validate?: (v: number | undefined) => string | undefined
     transform?: (v: number | undefined) => number | undefined
+    default?: () => number
 }
 
 export class NumberType extends BaseType {
@@ -55,6 +56,7 @@ export class NumberType extends BaseType {
             else this._error = error
         } else {
             if (this._options.transform) v = this._options.transform(v)
+            if (this._options.default && v === undefined) v = this._options.default()
             if (this._value !== v) {
                 this._changed = true
                 this._value = v

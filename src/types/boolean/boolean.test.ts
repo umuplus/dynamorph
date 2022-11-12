@@ -22,6 +22,14 @@ test('a simple boolean attribute', (t) => {
     t.is(attribute.changed, false)
 })
 
+test('a simple boolean attribute with default', (t) => {
+    const attribute = new BooleanType({ default: () => true })
+    attribute.value = undefined
+    t.is(attribute.error, undefined)
+    t.is(!!attribute.value, true)
+    t.is(attribute.changed, true)
+})
+
 test('input converted to boolean via transform', (t) => {
     const attribute = new BooleanType({ transform: (v) => !v })
     attribute.value = undefined
