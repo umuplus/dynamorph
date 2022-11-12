@@ -5,6 +5,7 @@ import { silent } from '../../utils/helpers'
 type BooleanBaseType = Omit<Attribute, 'type'>
 
 export interface BooleanOptions extends BooleanBaseType {
+    validate?: (v: boolean | undefined) => string | undefined
     transform?: (v: boolean | undefined) => boolean | undefined
 }
 
@@ -18,14 +19,17 @@ export class BooleanType extends BaseType {
     protected parse(v: boolean | undefined): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const { partitionKey, sortKey } = this._options
+        const { partitionKey, sortKey, validate } = this._options
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'boolean', received: type })
         } else if (type === 'boolean') {
+            if (validate) {
+                const message = validate(v)
+                if (message) error.addIssue({ path: 'value', message })
+            }
             if (partitionKey)
                 error.addIssue({ path: 'PartitionKey', expected: `string|number`, received: 'boolean', message: 'Partition key cannot be a boolean' })
-            else if (sortKey)
-                error.addIssue({ path: 'SortKey', expected: `string|number`, received: 'boolean', message: 'Sort key cannot be a boolean' })
+            if (sortKey) error.addIssue({ path: 'SortKey', expected: `string|number`, received: 'boolean', message: 'Sort key cannot be a boolean' })
         } else error.addIssue({ path: 'value', expected: 'boolean', received: type })
         if (error.hasIssues()) return error
     }
