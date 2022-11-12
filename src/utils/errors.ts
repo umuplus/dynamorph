@@ -1,19 +1,17 @@
 export interface Issue {
     path: string | Array<string | number>
-    expected: string | number
-    received: string | number
+    expected?: string | number
+    received?: string | number
     message?: string
 }
 
 export class Exception extends Error {
     protected _issues: Issue[] = []
 
-    constructor() {
+    constructor(issue?: Issue) {
         super()
-    }
 
-    reset() {
-        this._issues = []
+        if (issue) this.addIssue(issue)
     }
 
     addIssue(issue: Issue): Exception {
@@ -23,12 +21,8 @@ export class Exception extends Error {
             issue.message = `"${val}" is expected to be "${expected}" but received "${received}"`
         }
         this._issues.push(issue)
-        this.message =
-            this._issues
-                .filter((i) => i.message)
-                .map((i) => i.message)
-                .reverse()
-                .join(', ') + '.'
+        const issuesWithMessages = this._issues.filter((i) => i.message)
+        this.message = `${issuesWithMessages.map((i) => i.message).join(', ')}.`
         return this
     }
 

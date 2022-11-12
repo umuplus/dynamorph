@@ -31,6 +31,7 @@ export interface Attribute {
 
 export abstract class BaseType {
     protected _changed = false
+    protected _compositeAttributes: string[] = []
     protected _options: Record<string, any>
     protected _error: Exception | undefined = undefined
 

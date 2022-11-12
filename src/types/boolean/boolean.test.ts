@@ -48,6 +48,7 @@ test('cannot assign undefined to a required boolean attribute', (t) => {
 test('cannot assign an object to boolean attribute', (t) => {
     const attribute = new BooleanType({ required: true })
     attribute.value = JSON.parse('{"a":1}')
+    attribute.value = undefined
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
         {
@@ -55,6 +56,12 @@ test('cannot assign an object to boolean attribute', (t) => {
             message: '"value" is expected to be "boolean" but received "object"',
             path: 'value',
             received: 'object',
+        },
+        {
+            expected: 'boolean',
+            message: '"value" is expected to be "boolean" but received "undefined"',
+            path: 'value',
+            received: 'undefined',
         },
     ])
     t.is(!!attribute.value, false)
