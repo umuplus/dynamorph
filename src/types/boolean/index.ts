@@ -36,7 +36,7 @@ export class BooleanType extends BaseType {
     }
 
     set value(v: boolean | undefined) {
-        const error = this.parse(v as boolean)
+        const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
 
@@ -58,10 +58,6 @@ export class BooleanType extends BaseType {
 
     get changed(): boolean {
         return this._changed
-    }
-
-    get fieldName(): string | undefined {
-        return this._options.fieldName
     }
 }
 

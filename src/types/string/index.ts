@@ -64,7 +64,7 @@ export class StringType extends BaseType {
         if (!this._options.format) {
             if (typeof v === 'string' || typeof v === 'undefined') {
                 value = v
-                error = this.parse(v as string)
+                error = this.parse(v)
             } else {
                 error = new Exception({
                     path: 'value',
@@ -107,10 +107,6 @@ export class StringType extends BaseType {
 
     get changed(): boolean {
         return this._changed
-    }
-
-    get fieldName(): string | undefined {
-        return this._options.fieldName
     }
 
     get compositeAttributes(): string[] {

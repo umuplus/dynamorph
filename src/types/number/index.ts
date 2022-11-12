@@ -48,7 +48,7 @@ export class NumberType extends BaseType {
     }
 
     set value(v: number | undefined) {
-        const error = this.parse(v as number)
+        const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
 
@@ -70,10 +70,6 @@ export class NumberType extends BaseType {
 
     get changed(): boolean {
         return this._changed
-    }
-
-    get fieldName(): string | undefined {
-        return this._options.fieldName
     }
 }
 

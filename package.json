@@ -7,11 +7,12 @@
     "scripts": {
         "lint": "eslint './src/**/*.{js,ts,tsx}'",
         "test": "ava",
-        "test:clean": "npm run clean && npm test && npm run clean",
+        "test:clean": "npm run clean && npm run test && npm run clean",
         "test:coverage": "nyc ava",
+        "test:coverage:clean": "npm run clean && npm run test:coverage && npm run clean",
         "build": "tsc",
         "watch": "tsc -w",
-        "clean": "rm -rf dist coverage tmp"
+        "clean": "rm -rf dist coverage tmp .nyc_output"
     },
     "repository": {
         "type": "git",
