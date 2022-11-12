@@ -1,6 +1,6 @@
 import { Attribute, BaseType, KeyType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
-import { isFloat, isInt } from 'radash'
+import { isFloat, isInt } from '../../utils/validator'
 import { silent } from '../../utils/helpers'
 
 type NumberBaseType = Omit<Attribute, 'type'>

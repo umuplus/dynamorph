@@ -52,7 +52,6 @@
     "dependencies": {
         "@aws-sdk/client-dynamodb": "3.197.0",
         "@aws-sdk/lib-dynamodb": "3.197.0",
-        "radash": "9.0.2",
         "ulid": "2.3.0"
     }
 }
