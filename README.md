@@ -82,6 +82,7 @@ interface BooleanOptions extends BooleanBaseType {
 | ------------- | ------------------- | ------------------- | ------------------- |
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the value
 
 **Usages:**
 
@@ -126,6 +127,7 @@ interface NumberOptions extends NumberBaseType {
 | int           | boolean             | false               | Flag to determine whether the attribute is an integer or not
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the value
 
 **Usages:**
 
@@ -181,6 +183,7 @@ interface StringOptions extends StringBaseType {
 | regex         | RegExp              | false               | Checks the value is matches with the provided regular expression
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the value
 | mode          | StringMode          | false               | Checks the value matches with the pre-defined mode
 | format        | string              | false               | Determines the format of the value
 
@@ -232,11 +235,9 @@ export interface ListOptions extends ListBaseType {
 | min           | number              | false               | Checks length of the value is not less than the provided number
 | max           | number              | false               | Checks length of the value is not greater than the provided number
 | length        | number              | false               | Checks length of the value is equal to the provided number
-| regex         | RegExp              | false               | Checks the value is matches with the provided regular expression
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
-| mode          | StringMode          | false               | Checks the value matches with the pre-defined mode
-| format        | string              | false               | Determines the format of the value
+| default       | Function            | false               | A custom function to set the value
 
 **Usages:**
 
