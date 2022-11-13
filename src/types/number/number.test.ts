@@ -31,7 +31,6 @@ test('a simple number attribute with default', (t) => {
 })
 
 test('input converted to number via transform', (t) => {
-    // TODO? transform first, then validate maybe?
     const attribute = new NumberType({ gte: 0, lte: 1, transform: () => Math.random() })
     attribute.value = undefined
     t.is(attribute.error, undefined)

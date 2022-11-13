@@ -20,6 +20,28 @@ test('a simple string attribute with default', (t) => {
     t.is(attribute.changed, true)
 })
 
+test('a simple string attribute with limited options', (t) => {
+    const attribute = new StringType({ enum: ['test1', 'test2'] })
+    attribute.value = 'test2'
+    t.is(attribute.value, 'test2')
+    t.is(attribute.changed, true)
+})
+
+test('cannot assign a string different than a string attributes limited options', (t) => {
+    const attribute = new StringType({ enum: ['test1', 'test2'] })
+    attribute.value = 'test3'
+    t.is(attribute.error instanceof Exception, true)
+    t.deepEqual(attribute.error?.issues, [
+        {
+            expected: 'test1|test2',
+            message: '"value" is expected to be "test1|test2" but received "test3"',
+            path: 'value',
+            received: 'test3',
+        },
+    ])
+    t.is(!!attribute.value, false)
+})
+
 test('an email attribute', (t) => {
     const attribute = new StringType({ min: 1, max: 10, required: true, mode: StringMode.EMAIL, partitionKey: true })
     attribute.value = 'test1@t.co'

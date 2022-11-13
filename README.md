@@ -7,7 +7,7 @@ The main purpose is to make single table design smooth and easy with validators 
 
 ## Development Status
 
-It's still in development
+It's a weekend-only project and still in development.
 
 ## Supported Types
 
@@ -166,7 +166,6 @@ interface StringOptions extends StringBaseType {
     max?: number
     length?: number
     regex?: RegExp
-    // TODO! enum?: string[]
     validate?: (v: string | undefined) => string | undefined
     transform?: (v: string | undefined) => string | undefined
     default?: () => string

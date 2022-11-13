@@ -17,7 +17,7 @@ export interface StringOptions extends StringBaseType {
     max?: number
     length?: number
     regex?: RegExp
-    // TODO! enum?: string[]
+    enum?: string[]
     validate?: (v: string | undefined) => string | undefined
     transform?: (v: string | undefined) => string | undefined
     default?: () => string
@@ -37,7 +37,7 @@ export class StringType extends BaseType {
     protected parse(v: string | undefined): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const { min, max, length, regex, mode, validate } = this._options
+        const { min, max, length, regex, mode, validate, enum: enumOptions } = this._options
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'string', received: type })
         } else if (type === 'string') {
@@ -45,6 +45,10 @@ export class StringType extends BaseType {
             if (max !== undefined && v!.length > max) error.addIssue({ path: 'length', expected: `<=${max}`, received: v?.length })
             if (length !== undefined && v!.length !== length) error.addIssue({ path: 'length', expected: length, received: v?.length })
             if (regex !== undefined && !regex.test(v!)) error.addIssue({ path: 'regex', expected: `${regex}`, received: v })
+            if (enumOptions !== undefined && v && !enumOptions.includes(v)) {
+                const expected = enumOptions.length > 3 ? `${enumOptions.slice(0, 3).join('|')}...` : enumOptions.join('|')
+                error.addIssue({ path: 'value', expected, received: v })
+            }
 
             if (mode === StringMode.ULID && !isUlid(v)) error.addIssue({ path: 'mode', expected: 'ulid', received: v })
             else if (mode === StringMode.EMAIL && !isEmail(v)) error.addIssue({ path: 'mode', expected: 'email', received: v })
