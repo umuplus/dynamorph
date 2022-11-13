@@ -66,6 +66,7 @@ export class StringType extends BaseType {
     set value(v: string | Record<string, any> | undefined) {
         let error: Exception | void
         let value: Value = undefined
+        if (this._options.default && v === undefined) v = this._options.default()
         if (this._options.transform) v = this._options.transform(v)
         if (!this._options.format) {
             if (typeof v === 'string' || typeof v === 'undefined') {
@@ -97,12 +98,9 @@ export class StringType extends BaseType {
 
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
-        } else {
-            if (this._options.default && value === undefined) value = this._options.default()
-            if (this._value !== value) {
-                this._changed = true
-                this._value = value
-            }
+        } else if (this._value !== value) {
+            this._changed = true
+            this._value = value
         }
     }
 

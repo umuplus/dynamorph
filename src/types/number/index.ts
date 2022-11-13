@@ -49,6 +49,7 @@ export class NumberType extends BaseType {
     }
 
     set value(v: Value) {
+        if (this._options.default && v === undefined) v = this._options.default()
         if (this._options.transform) v = this._options.transform(v)
         const error = this.parse(v)
         if (error) {
@@ -56,12 +57,9 @@ export class NumberType extends BaseType {
 
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
-        } else {
-            if (this._options.default && v === undefined) v = this._options.default()
-            if (this._value !== v) {
-                this._changed = true
-                this._value = v
-            }
+        } else if (this._value !== v) {
+            this._changed = true
+            this._value = v
         }
     }
 
