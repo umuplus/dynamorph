@@ -31,7 +31,6 @@ test('a simple list attribute with default', (t) => {
 })
 
 test('input converted to list via transform', (t) => {
-    // TODO? transform first, then validate maybe?
     const attribute = new ListType({ transform: (v) => v?.map((k) => k?.toUpperCase() || k) })
     attribute.value = ['a', 'b', 'c']
     t.is(attribute.error, undefined)

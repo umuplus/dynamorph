@@ -4,6 +4,7 @@ import { isFloat, isInt } from '../../utils/validator'
 import { silent } from '../../utils/helpers'
 
 type NumberBaseType = Omit<Attribute, 'type'>
+type Value = number | undefined
 
 export interface NumberOptions extends NumberBaseType {
     lt?: number
@@ -12,19 +13,19 @@ export interface NumberOptions extends NumberBaseType {
     gte?: number
     float?: boolean
     int?: boolean
-    validate?: (v: number | undefined) => string | undefined
-    transform?: (v: number | undefined) => number | undefined
+    validate?: (v: Value) => string | undefined
+    transform?: (v: Value) => Value
     default?: () => number
 }
 
 export class NumberType extends BaseType {
-    protected _value: number | undefined = undefined
+    protected _value: Value = undefined
 
     constructor(options: NumberOptions) {
         super({ ...options, type: KeyType.NUMBER })
     }
 
-    protected parse(v: number | undefined): Exception | void {
+    protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
         const { lt, lte, gt, gte, float, int, validate } = this._options
@@ -47,7 +48,8 @@ export class NumberType extends BaseType {
         if (error.hasIssues()) return error
     }
 
-    set value(v: number | undefined) {
+    set value(v: Value) {
+        if (this._options.transform) v = this._options.transform(v)
         const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
@@ -55,7 +57,6 @@ export class NumberType extends BaseType {
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
         } else {
-            if (this._options.transform) v = this._options.transform(v)
             if (this._options.default && v === undefined) v = this._options.default()
             if (this._value !== v) {
                 this._changed = true
@@ -64,7 +65,7 @@ export class NumberType extends BaseType {
         }
     }
 
-    get value(): number | undefined {
+    get value(): Value {
         return this._value
     }
 

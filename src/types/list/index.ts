@@ -3,24 +3,25 @@ import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
 type ListBaseType = Omit<Attribute, 'type'>
+type Value = any[] | undefined
 
 export interface ListOptions extends ListBaseType {
     min?: number
     max?: number
     length?: number
-    validate?: (v: any[] | undefined) => string | undefined
-    transform?: (v: any[] | undefined) => any[] | undefined
+    validate?: (v: Value) => string | undefined
+    transform?: (v: Value) => Value
     default?: () => any[]
 }
 
 export class ListType extends BaseType {
-    protected _value: any[] | undefined = undefined
+    protected _value: Value = undefined
 
     constructor(options: ListOptions) {
         super({ ...options, type: KeyType.NUMBER })
     }
 
-    protected parse(v: any[] | undefined): Exception | void {
+    protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
         const { min, max, length, validate } = this._options
@@ -39,7 +40,8 @@ export class ListType extends BaseType {
         if (error.hasIssues()) return error
     }
 
-    set value(v: any[] | undefined) {
+    set value(v: Value) {
+        if (this._options.transform) v = this._options.transform(v)
         const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
@@ -47,7 +49,6 @@ export class ListType extends BaseType {
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
         } else {
-            if (this._options.transform) v = this._options.transform(v)
             if (this._options.default && v === undefined) v = this._options.default()
             if (this._value !== v) {
                 this._changed = true
@@ -56,7 +57,7 @@ export class ListType extends BaseType {
         }
     }
 
-    get value(): any[] | undefined {
+    get value(): Value {
         return this._value
     }
 

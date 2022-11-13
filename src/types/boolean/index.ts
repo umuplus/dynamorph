@@ -3,21 +3,22 @@ import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
 type BooleanBaseType = Omit<Attribute, 'type'>
+type Value = boolean | undefined
 
 export interface BooleanOptions extends BooleanBaseType {
-    validate?: (v: boolean | undefined) => string | undefined
-    transform?: (v: boolean | undefined) => boolean | undefined
+    validate?: (v: Value) => string | undefined
+    transform?: (v: Value) => Value
     default?: () => boolean
 }
 
 export class BooleanType extends BaseType {
-    protected _value: boolean | undefined = undefined
+    protected _value: Value = undefined
 
     constructor(options: BooleanOptions) {
         super({ ...options, type: 'Boolean' })
     }
 
-    protected parse(v: boolean | undefined): Exception | void {
+    protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
         const { partitionKey, sortKey, validate } = this._options
@@ -35,7 +36,8 @@ export class BooleanType extends BaseType {
         if (error.hasIssues()) return error
     }
 
-    set value(v: boolean | undefined) {
+    set value(v: Value) {
+        if (this._options.transform) v = this._options.transform(v)
         const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
@@ -43,7 +45,6 @@ export class BooleanType extends BaseType {
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
         } else {
-            if (this._options.transform) v = this._options.transform(v)
             if (this._options.default && v === undefined) v = this._options.default()
             if (this._value !== v) {
                 this._changed = true
@@ -52,7 +53,7 @@ export class BooleanType extends BaseType {
         }
     }
 
-    get value(): boolean | undefined {
+    get value(): Value {
         return this._value
     }
 

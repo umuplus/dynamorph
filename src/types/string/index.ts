@@ -11,6 +11,7 @@ export enum StringMode {
 }
 
 type StringBaseType = Omit<Attribute, 'type'>
+type Value = string | undefined
 
 export interface StringOptions extends StringBaseType {
     min?: number
@@ -18,15 +19,15 @@ export interface StringOptions extends StringBaseType {
     length?: number
     regex?: RegExp
     enum?: string[]
-    validate?: (v: string | undefined) => string | undefined
-    transform?: (v: string | undefined) => string | undefined
+    validate?: (v: Value) => string | undefined
+    transform?: (v: Value) => Value
     default?: () => string
     mode?: StringMode
     format?: string
 }
 
 export class StringType extends BaseType {
-    protected _value: string | undefined = undefined
+    protected _value: Value = undefined
 
     constructor(options: StringOptions) {
         super({ ...options, type: KeyType.STRING })
@@ -34,7 +35,7 @@ export class StringType extends BaseType {
         this._compositeAttributes = this._options.format ? findCompositeAttributes(this._options.format) : []
     }
 
-    protected parse(v: string | undefined): Exception | void {
+    protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
         const { min, max, length, regex, mode, validate, enum: enumOptions } = this._options
@@ -64,7 +65,8 @@ export class StringType extends BaseType {
 
     set value(v: string | Record<string, any> | undefined) {
         let error: Exception | void
-        let value: string | undefined = undefined
+        let value: Value = undefined
+        if (this._options.transform) v = this._options.transform(v)
         if (!this._options.format) {
             if (typeof v === 'string' || typeof v === 'undefined') {
                 value = v
@@ -96,7 +98,6 @@ export class StringType extends BaseType {
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
         } else {
-            if (this._options.transform) value = this._options.transform(value)
             if (this._options.default && value === undefined) value = this._options.default()
             if (this._value !== value) {
                 this._changed = true
@@ -105,7 +106,7 @@ export class StringType extends BaseType {
         }
     }
 
-    get value(): string | undefined {
+    get value(): Value {
         return this._value
     }
 
