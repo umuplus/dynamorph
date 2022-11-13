@@ -93,7 +93,7 @@ test('cannot assign out of range value to a string attribute', (t) => {
 test('a simply formatted string attribute', (t) => {
     const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
     const attribute = new StringType({ format: '{userId}#USR_ADR#{addressId}', min: 1, max: 250 })
-    attribute.value = data
+    attribute.applyValue(data)
     t.is(attribute.format, '{userId}#USR_ADR#{addressId}')
     t.deepEqual(attribute.compositeAttributes, ['userId', 'addressId'])
     t.is(attribute.value, `${data.userId}#USR_ADR#${data.addressId}`)
@@ -106,10 +106,8 @@ test('cannot assign string to formatted string attribute', (t) => {
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
         {
-            expected: 'object',
-            message: '"value" must be an "object" when there is a "format"',
-            path: 'value',
-            received: 'string',
+            path: 'format',
+            message: 'must call "applyValue" when there is a format',
         },
     ])
     t.is(attribute.changed, false)
@@ -118,14 +116,12 @@ test('cannot assign string to formatted string attribute', (t) => {
 test('cannot assign object to non-formatted string attribute', (t) => {
     const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
     const attribute = new StringType({ min: 1, max: 250 })
-    attribute.value = data
+    attribute.applyValue(data)
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
         {
-            expected: 'string',
-            message: '"value" must be a "string" when there is no "format"',
-            path: 'value',
-            received: 'object',
+            path: 'format',
+            message: 'must assign value when there is no format',
         },
     ])
     t.is(attribute.changed, false)

@@ -63,45 +63,44 @@ export class StringType extends BaseType {
         if (error.hasIssues()) return error
     }
 
-    set value(v: string | Record<string, any> | undefined) {
-        let error: Exception | void
-        let value: Value = undefined
-        if (this._options.default && v === undefined) v = this._options.default()
-        if (this._options.transform) v = this._options.transform(v)
-        if (!this._options.format) {
-            if (typeof v === 'string' || typeof v === 'undefined') {
-                value = v
-                error = this.parse(v)
-            } else {
-                error = new Exception({
-                    path: 'value',
-                    expected: 'string',
-                    received: typeof v,
-                    message: '"value" must be a "string" when there is no "format"',
-                })
-            }
-        } else {
-            if (typeof v === 'string' || typeof v === 'undefined') {
-                error = new Exception({
-                    path: 'value',
-                    expected: 'object',
-                    received: typeof v,
-                    message: '"value" must be an "object" when there is a "format"',
-                })
-            } else {
-                value = applyFormat(this._options.format, v)
-                error = this.parse(value)
-            }
-        }
+    private _setValue(v: Value, error?: Exception | void) {
         if (error) {
             if (!silent()) throw error
 
             if (this.error) this.error.addIssues(error.issues)
             else this._error = error
-        } else if (this._value !== value) {
+        } else if (this._value !== v) {
             this._changed = true
-            this._value = value
+            this._value = v
         }
+    }
+
+    set value(v: string | undefined) {
+        if (this._options.default && v === undefined) v = this._options.default()
+        if (this._options.transform) v = this._options.transform(v)
+
+        let error: Exception | void
+        let value: Value = undefined
+        if (this._options.format) error = new Exception({ path: 'format', message: 'must call "applyValue" when there is a format' })
+        else {
+            value = v
+            error = this.parse(v)
+        }
+        this._setValue(value, error)
+    }
+
+    applyValue(v: Record<string, any> | undefined) {
+        if (this._options.default && v === undefined) v = this._options.default()
+        if (this._options.transform) v = this._options.transform(v)
+
+        let error: Exception | void
+        let value: Value = undefined
+        if (!this._options.format) error = new Exception({ path: 'format', message: 'must assign value when there is no format' })
+        else if (v) {
+            value = applyFormat(this._options.format, v)
+            error = this.parse(value)
+        }
+        this._setValue(value, error)
     }
 
     get value(): Value {
