@@ -1,4 +1,4 @@
-import { Attribute, BaseType, KeyType } from '../../utils/types'
+import { Attribute, BaseType, ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -18,7 +18,7 @@ export class ListType extends BaseType {
     protected _value: Value = undefined
 
     constructor(options: ListOptions) {
-        super({ ...options, type: KeyType.NUMBER })
+        super({ ...options, type: ComplexAttributeType.LIST })
     }
 
     protected parse(v: Value): Exception | void {

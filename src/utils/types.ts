@@ -54,4 +54,8 @@ export abstract class BaseType {
     get format(): string | undefined {
         return this._options.format
     }
+
+    get ignore(): string | undefined {
+        return this._options.ignore
+    }
 }
