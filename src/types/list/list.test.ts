@@ -1,7 +1,7 @@
 import ListType from '.'
 import test from 'ava'
-import { silent } from '../../utils/helpers'
 import { Exception } from '../../utils/errors'
+import { silent } from '../../utils/helpers'
 
 test.before(() => silent(true))
 
