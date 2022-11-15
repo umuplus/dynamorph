@@ -7,11 +7,11 @@ test.before(() => silent(true))
 
 test('a simple required number set attribute', (t) => {
     const attribute = new NumberSetType({ fieldName: 'items', min: 1, max: 10, size: 3, required: true })
-    attribute.value = new Set([1, 2, 3])
+    attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error, undefined)
     t.is(attribute.fieldName, 'items')
-    t.deepEqual(attribute.value, new Set([1, 2, 3]))
-    t.deepEqual(attribute.plain, [1, 2, 3])
+    t.deepEqual(attribute.value, new Set(['a', 'b', 'c']))
+    t.deepEqual(attribute.plain, ['a', 'b', 'c'])
     t.is(attribute.changed, true)
     t.is(!!attribute.ignore, false)
 })
@@ -25,24 +25,24 @@ test('a simple number set attribute', (t) => {
 })
 
 test('a simple number set attribute with default', (t) => {
-    const attribute = new NumberSetType({ default: () => new Set([1, 2, 3]) })
+    const attribute = new NumberSetType({ default: () => new Set(['a', 'b', 'c']) })
     attribute.value = undefined
     t.is(attribute.error, undefined)
-    t.is(JSON.stringify(attribute.plain), '[1,2,3]')
+    t.is(JSON.stringify(attribute.plain), '["a","b","c"]')
     t.is(attribute.changed, true)
 })
 
 test('input converted to number set via transform', (t) => {
-    const attribute = new NumberSetType({ transform: (v) => new Set(Array.from(v!).map((k) => k * 2)) })
-    attribute.value = new Set([1, 2, 3])
+    const attribute = new NumberSetType({ transform: (v) => new Set(Array.from(v!).map((k) => k.toUpperCase())) })
+    attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error, undefined)
-    t.deepEqual(attribute.plain, [2, 4, 6])
+    t.deepEqual(attribute.plain, ['A', 'B', 'C'])
     t.is(attribute.changed, true)
 })
 
 test('custom validator fails for a number set attribute', (t) => {
     const attribute = new NumberSetType({ validate: (v) => ((v?.size || 0) % 2 ? 'number of items in the value must be even' : undefined) })
-    attribute.value = new Set([1, 2, 3])
+    attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
         {
@@ -58,8 +58,8 @@ test('cannot assign object to a number set attribute', (t) => {
     attribute.value = JSON.parse('{"a":1}')
     t.deepEqual(attribute.error?.issues, [
         {
-            expected: 'Set<number>',
-            message: '"value" is expected to be "Set<number>" but received "object"',
+            expected: 'Set<string>',
+            message: '"value" is expected to be "Set<string>" but received "object"',
             path: 'value',
             received: 'object',
         },
@@ -69,7 +69,7 @@ test('cannot assign object to a number set attribute', (t) => {
 
 test('cannot assign above of allowed range value to number set attribute', (t) => {
     const attribute = new NumberSetType({ max: 2 })
-    attribute.value = new Set([1, 2, 3, 4])
+    attribute.value = new Set(['a', 'b', 'c', 'd'])
     t.deepEqual(attribute.error?.issues, [
         {
             expected: '<=2',
@@ -83,7 +83,7 @@ test('cannot assign above of allowed range value to number set attribute', (t) =
 
 test('cannot assign below of allowed range value to number set attribute', (t) => {
     const attribute = new NumberSetType({ min: 3 })
-    attribute.value = new Set([1])
+    attribute.value = new Set(['a'])
     t.deepEqual(attribute.error?.issues, [
         {
             expected: '3<=',
@@ -101,8 +101,8 @@ test('cannot assign undefined to required number set attribute', (t) => {
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
         {
-            expected: 'Set<number>',
-            message: '"value" is expected to be "Set<number>" but received "undefined"',
+            expected: 'Set<string>',
+            message: '"value" is expected to be "Set<string>" but received "undefined"',
             path: 'value',
             received: 'undefined',
         },

@@ -2,22 +2,22 @@ import { Attribute, BaseType, ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
-type NumberSetBaseType = Omit<Attribute, 'type'>
-type Value = Set<number> | undefined
+type StringSetBaseType = Omit<Attribute, 'type'>
+type Value = Set<string> | undefined
 
-export interface NumberSetOptions extends NumberSetBaseType {
+export interface StringSetOptions extends StringSetBaseType {
     min?: number
     max?: number
     size?: number
     validate?: (v: Value) => string | undefined
     transform?: (v: Value) => Value
-    default?: () => Set<number>
+    default?: () => Set<string>
 }
 
-export class NumberSetType extends BaseType {
+export class StringSetType extends BaseType {
     protected _value: Value = undefined
 
-    constructor(options: NumberSetOptions) {
+    constructor(options: StringSetOptions) {
         super({ ...options, type: ComplexAttributeType.LIST })
     }
 
@@ -26,7 +26,7 @@ export class NumberSetType extends BaseType {
         const type = typeof v
         const { min, max, length, validate } = this._options
         if (type === 'undefined') {
-            if (this._options.required) error.addIssue({ path: 'value', expected: 'Set<number>', received: type })
+            if (this._options.required) error.addIssue({ path: 'value', expected: 'Set<string>', received: type })
         } else if (v instanceof Set) {
             if (min !== undefined && v!.size < min) error.addIssue({ path: 'size', expected: `${min}<=`, received: v?.size })
             if (max !== undefined && v!.size > max) error.addIssue({ path: 'size', expected: `<=${max}`, received: v?.size })
@@ -36,7 +36,7 @@ export class NumberSetType extends BaseType {
                 const message = validate(v)
                 if (message) error.addIssue({ path: 'value', message })
             }
-        } else error.addIssue({ path: 'value', expected: 'Set<number>', received: type })
+        } else error.addIssue({ path: 'value', expected: 'Set<string>', received: type })
         if (error.hasIssues()) return error
     }
 
@@ -59,9 +59,9 @@ export class NumberSetType extends BaseType {
         return this._value
     }
 
-    get plain(): number[] | undefined {
+    get plain(): string[] | undefined {
         return this._value ? Array.from(this._value) : undefined
     }
 }
 
-export default NumberSetType
+export default StringSetType
