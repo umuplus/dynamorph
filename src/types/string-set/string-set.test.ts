@@ -1,12 +1,12 @@
-import NumberSetType from '.'
+import StringSetType from '.'
 import test from 'ava'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
 test.before(() => silent(true))
 
-test('a simple required number set attribute', (t) => {
-    const attribute = new NumberSetType({ fieldName: 'items', min: 1, max: 10, size: 3, required: true })
+test('a simple required string set attribute', (t) => {
+    const attribute = new StringSetType({ fieldName: 'items', min: 1, max: 10, size: 3, required: true })
     attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error, undefined)
     t.is(attribute.fieldName, 'items')
@@ -16,32 +16,32 @@ test('a simple required number set attribute', (t) => {
     t.is(!!attribute.ignore, false)
 })
 
-test('a simple number set attribute', (t) => {
-    const attribute = new NumberSetType({ min: 1, max: 10, size: 3 })
+test('a simple string set attribute', (t) => {
+    const attribute = new StringSetType({ min: 1, max: 10, size: 3 })
     attribute.value = undefined
     t.is(attribute.error, undefined)
     t.is(attribute.value, undefined)
     t.is(attribute.changed, false)
 })
 
-test('a simple number set attribute with default', (t) => {
-    const attribute = new NumberSetType({ default: () => new Set(['a', 'b', 'c']) })
+test('a simple string set attribute with default', (t) => {
+    const attribute = new StringSetType({ default: () => new Set(['a', 'b', 'c']) })
     attribute.value = undefined
     t.is(attribute.error, undefined)
     t.is(JSON.stringify(attribute.plain), '["a","b","c"]')
     t.is(attribute.changed, true)
 })
 
-test('input converted to number set via transform', (t) => {
-    const attribute = new NumberSetType({ transform: (v) => new Set(Array.from(v!).map((k) => k.toUpperCase())) })
+test('input converted to string set via transform', (t) => {
+    const attribute = new StringSetType({ transform: (v) => new Set(Array.from(v!).map((k) => k.toUpperCase())) })
     attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error, undefined)
     t.deepEqual(attribute.plain, ['A', 'B', 'C'])
     t.is(attribute.changed, true)
 })
 
-test('custom validator fails for a number set attribute', (t) => {
-    const attribute = new NumberSetType({ validate: (v) => ((v?.size || 0) % 2 ? 'number of items in the value must be even' : undefined) })
+test('custom validator fails for a string set attribute', (t) => {
+    const attribute = new StringSetType({ validate: (v) => ((v?.size || 0) % 2 ? 'number of items in the value must be even' : undefined) })
     attribute.value = new Set(['a', 'b', 'c'])
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
@@ -53,8 +53,8 @@ test('custom validator fails for a number set attribute', (t) => {
     t.is(!!attribute.value, false)
 })
 
-test('cannot assign object to a number set attribute', (t) => {
-    const attribute = new NumberSetType({})
+test('cannot assign object to a string set attribute', (t) => {
+    const attribute = new StringSetType({})
     attribute.value = JSON.parse('{"a":1}')
     t.deepEqual(attribute.error?.issues, [
         {
@@ -67,8 +67,8 @@ test('cannot assign object to a number set attribute', (t) => {
     t.is(!!attribute.value, false)
 })
 
-test('cannot assign above of allowed range value to number set attribute', (t) => {
-    const attribute = new NumberSetType({ max: 2 })
+test('cannot assign above of allowed range value to string set attribute', (t) => {
+    const attribute = new StringSetType({ max: 2 })
     attribute.value = new Set(['a', 'b', 'c', 'd'])
     t.deepEqual(attribute.error?.issues, [
         {
@@ -81,8 +81,8 @@ test('cannot assign above of allowed range value to number set attribute', (t) =
     t.is(!!attribute.value, false)
 })
 
-test('cannot assign below of allowed range value to number set attribute', (t) => {
-    const attribute = new NumberSetType({ min: 3 })
+test('cannot assign below of allowed range value to string set attribute', (t) => {
+    const attribute = new StringSetType({ min: 3 })
     attribute.value = new Set(['a'])
     t.deepEqual(attribute.error?.issues, [
         {
@@ -95,8 +95,8 @@ test('cannot assign below of allowed range value to number set attribute', (t) =
     t.is(!!attribute.value, false)
 })
 
-test('cannot assign undefined to required number set attribute', (t) => {
-    const attribute = new NumberSetType({ required: true })
+test('cannot assign undefined to required string set attribute', (t) => {
+    const attribute = new StringSetType({ required: true })
     attribute.value = undefined
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [

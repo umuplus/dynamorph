@@ -82,7 +82,7 @@ interface BooleanOptions extends BooleanBaseType {
 | ------------- | ------------------- | ------------------- | ------------------- |
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
-| default       | Function            | false               | A custom function to set the value
+| default       | Function            | false               | A custom function to set the default value
 
 **Usages:**
 
@@ -127,7 +127,7 @@ interface NumberOptions extends NumberBaseType {
 | int           | boolean             | false               | Flag to determine whether the attribute is an integer or not
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
-| default       | Function            | false               | A custom function to set the value
+| default       | Function            | false               | A custom function to set the default value
 
 **Usages:**
 
@@ -182,7 +182,7 @@ interface StringOptions extends StringBaseType {
 | regex         | RegExp              | false               | Checks the value is matches with the provided regular expression
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
-| default       | Function            | false               | A custom function to set the value
+| default       | Function            | false               | A custom function to set the default value
 | mode          | StringMode          | false               | Checks the value matches with the pre-defined mode
 | format        | string              | false               | Determines the format of the value
 
@@ -212,7 +212,7 @@ attribute2.value = { username: 'info', domain: 'example.com' }
 
 ### List
 
-This type is for defining attributes to store string values.
+This type is for defining attributes to store list values.
 
 **Options:**
 
@@ -222,7 +222,7 @@ type ListBaseType = Omit<Attribute, 'type'>
 export interface ListOptions extends ListBaseType {
     min?: number
     max?: number
-    length?: number
+    size?: number
     validate?: (v: any[] | undefined) => string | undefined
     transform?: (v: any[] | undefined) => any[] | undefined
     default?: () => any[]
@@ -233,10 +233,10 @@ export interface ListOptions extends ListBaseType {
 | ------------- | ------------------- | ------------------- | ------------------- |
 | min           | number              | false               | Checks length of the value is not less than the provided number
 | max           | number              | false               | Checks length of the value is not greater than the provided number
-| length        | number              | false               | Checks length of the value is equal to the provided number
+| size          | number              | false               | Checks length of the value is equal to the provided number
 | validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
 | transform     | Function            | false               | A custom function to overwrite the value
-| default       | Function            | false               | A custom function to set the value
+| default       | Function            | false               | A custom function to set the default value
 
 **Usages:**
 
@@ -244,10 +244,132 @@ export interface ListOptions extends ListBaseType {
 const attribute = new ListType({
     min: 1,
     max: 5,
-    length: 3,
+    size: 3,
     validate: (v: any[] | undefined) => (v.length % 2 ? 'number of items in the value must be even' : undefined),
     transform: (v: any[] | undefined) => v.map(k => k?.toUpperCase() || k),
     default: () => [],
 })
 attribute.value = ['a', 'b', 'c']
+```
+
+### Map
+
+This type is for defining attributes to store map (object) values.
+
+**Options:**
+
+```typescript
+type MapBaseType = Omit<Attribute, 'type'>
+
+export interface MapOptions extends MapBaseType {
+    validate?: (v: Record<string, any> | undefined) => string | undefined
+    transform?: (v: Record<string, any> | undefined) => Record<string, any> | undefined
+    default?: () => Record<string, any>
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
+| transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the default value
+
+**Usages:**
+
+```typescript
+const attribute = new MapType({
+    validate: (v: Record<string, any> | undefined) => (!v.type ? 'type must exist' : undefined),
+    transform: (v: Record<string, any> | undefined) => {
+        Object.keys(v).map(k => v[k].toUpperCase())
+        return v
+    }),
+    default: () => {},
+})
+attribute.value = { type: 'x', a: 'a', b: 'b' }
+```
+
+### NumberSet
+
+This type is for defining attributes to store a set of numbers.
+
+**Options:**
+
+```typescript
+type NumberSetBaseType = Omit<Attribute, 'type'>
+
+export interface NumberSetOptions extends NumberSetBaseType {
+    min?: number
+    max?: number
+    size?: number
+    validate?: (v: Set<number> | undefined) => string | undefined
+    transform?: (v: Set<number> | undefined) => Set<number> | undefined
+    default?: () => Set<number>
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| min           | number              | false               | Checks length of the value is not less than the provided number
+| max           | number              | false               | Checks length of the value is not greater than the provided number
+| size          | number              | false               | Checks length of the value is equal to the provided number
+| validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
+| transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the default value
+
+**Usages:**
+
+```typescript
+const attribute = new NumberSetType({
+    min: 1,
+    max: 5,
+    size: 3,
+    validate: (v: Set<number> | undefined) => (v.size % 2 ? 'number of items in the value must be even' : undefined),
+    transform: (v: Set<number> | undefined) => new Set(Array.from(v).map(k => k * 2)),
+    default: () => new Set<number>(),
+})
+attribute.value = new Set([1, 2])
+attribute.plain() // [2, 4]
+```
+
+### StringSet
+
+This type is for defining attributes to store a set of strings.
+
+**Options:**
+
+```typescript
+type StringSetBaseType = Omit<Attribute, 'type'>
+
+export interface StringSetOptions extends StringSetBaseType {
+    min?: number
+    max?: number
+    size?: number
+    validate?: (v: Set<string> | undefined) => string | undefined
+    transform?: (v: Set<string> | undefined) => Set<string> | undefined
+    default?: () => Set<string>
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| min           | number              | false               | Checks length of the value is not less than the provided number
+| max           | number              | false               | Checks length of the value is not greater than the provided number
+| size          | number              | false               | Checks length of the value is equal to the provided number
+| validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
+| transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the default value
+
+**Usages:**
+
+```typescript
+const attribute = new StringSetType({
+    min: 1,
+    max: 5,
+    size: 3,
+    validate: (v: Set<string> | undefined) => (v.size % 2 ? 'number of items in the value must be even' : undefined),
+    transform: (v: Set<string> | undefined) => new Set(Array.from(v).map(k => k.toUpperCase())),
+    default: () => new Set<string>(),
+})
+attribute.value = new Set(['a', 'b'])
+attribute.plain() // ['A', 'B']
 ```
