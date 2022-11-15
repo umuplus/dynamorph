@@ -8,7 +8,7 @@ type Value = any[] | undefined
 export interface ListOptions extends ListBaseType {
     min?: number
     max?: number
-    length?: number
+    size?: number
     validate?: (v: Value) => string | undefined
     transform?: (v: Value) => Value
     default?: () => any[]
@@ -24,13 +24,13 @@ export class ListType extends BaseType {
     protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const { min, max, length, validate } = this._options
+        const { min, max, size, validate } = this._options
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'array', received: type })
         } else if (Array.isArray(v)) {
-            if (min !== undefined && v!.length < min) error.addIssue({ path: 'length', expected: `${min}<=`, received: v?.length })
-            if (max !== undefined && v!.length > max) error.addIssue({ path: 'length', expected: `<=${max}`, received: v?.length })
-            if (length !== undefined && v!.length !== length) error.addIssue({ path: 'length', expected: length, received: v?.length })
+            if (min !== undefined && v!.length < min) error.addIssue({ path: 'size', expected: `${min}<=`, received: v?.length })
+            if (max !== undefined && v!.length > max) error.addIssue({ path: 'size', expected: `<=${max}`, received: v?.length })
+            if (size !== undefined && v!.length !== size) error.addIssue({ path: 'size', expected: size, received: v?.length })
 
             if (validate) {
                 const message = validate(v)
@@ -57,10 +57,6 @@ export class ListType extends BaseType {
 
     get value(): Value {
         return this._value
-    }
-
-    get changed(): boolean {
-        return this._changed
     }
 }
 

@@ -107,10 +107,6 @@ export class StringType extends BaseType {
         return this._value
     }
 
-    get changed(): boolean {
-        return this._changed
-    }
-
     get compositeAttributes(): string[] {
         return this._compositeAttributes
     }

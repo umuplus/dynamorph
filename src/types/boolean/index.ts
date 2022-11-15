@@ -54,10 +54,6 @@ export class BooleanType extends BaseType {
     get value(): Value {
         return this._value
     }
-
-    get changed(): boolean {
-        return this._changed
-    }
 }
 
 export default BooleanType

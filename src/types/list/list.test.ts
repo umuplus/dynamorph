@@ -6,7 +6,7 @@ import { silent } from '../../utils/helpers'
 test.before(() => silent(true))
 
 test('a simple required list attribute', (t) => {
-    const attribute = new ListType({ fieldName: 'items', min: 1, max: 10, length: 3, required: true })
+    const attribute = new ListType({ fieldName: 'items', min: 1, max: 10, size: 3, required: true })
     attribute.value = ['a', 'b', 'c']
     t.is(attribute.error, undefined)
     t.is(attribute.fieldName, 'items')
@@ -15,7 +15,7 @@ test('a simple required list attribute', (t) => {
 })
 
 test('a simple list attribute', (t) => {
-    const attribute = new ListType({ min: 1, max: 10, length: 3 })
+    const attribute = new ListType({ min: 1, max: 10, size: 3 })
     attribute.value = undefined
     t.is(attribute.error, undefined)
     t.is(attribute.value, undefined)
@@ -71,8 +71,8 @@ test('cannot assign above of allowed range value to list attribute', (t) => {
     t.deepEqual(attribute.error?.issues, [
         {
             expected: '<=2',
-            message: '"length" is expected to be "<=2" but received "4"',
-            path: 'length',
+            message: '"size" is expected to be "<=2" but received "4"',
+            path: 'size',
             received: 4,
         },
     ])
@@ -85,8 +85,8 @@ test('cannot assign below of allowed range value to list attribute', (t) => {
     t.deepEqual(attribute.error?.issues, [
         {
             expected: '3<=',
-            message: '"length" is expected to be "3<=" but received "1"',
-            path: 'length',
+            message: '"size" is expected to be "3<=" but received "1"',
+            path: 'size',
             received: 1,
         },
     ])

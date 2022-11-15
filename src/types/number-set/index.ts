@@ -62,10 +62,6 @@ export class NumberSetType extends BaseType {
     get plain(): number[] | undefined {
         return this._value ? Array.from(this._value) : undefined
     }
-
-    get changed(): boolean {
-        return this._changed
-    }
 }
 
 export default NumberSetType
