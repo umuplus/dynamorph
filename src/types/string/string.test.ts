@@ -57,7 +57,9 @@ test('transform can overwrites the value of a string attribute', (t) => {
 })
 
 test('custom validator fails for a string attribute', (t) => {
-    const attribute = new StringType({ validate: (v) => (v?.includes('forbidden') ? 'value cannot contain forbidden' : undefined) })
+    const attribute = new StringType({
+        validate: (v) => (v?.includes('forbidden') ? 'value cannot contain forbidden' : undefined),
+    })
     attribute.value = 'This is a forbidden document'
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [
@@ -91,7 +93,10 @@ test('cannot assign out of range value to a string attribute', (t) => {
 })
 
 test('a simply formatted string attribute', (t) => {
-    const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
+    const data = {
+        userId: Math.random().toString().split('.').pop(),
+        addressId: Math.random().toString().split('.').pop(),
+    }
     const attribute = new StringType({ format: '{userId}#USR_ADR#{addressId}', min: 1, max: 250 })
     attribute.applyValue(data)
     t.is(attribute.format, '{userId}#USR_ADR#{addressId}')
@@ -114,7 +119,10 @@ test('cannot assign string to formatted string attribute', (t) => {
 })
 
 test('cannot assign object to non-formatted string attribute', (t) => {
-    const data = { userId: Math.random().toString().split('.').pop(), addressId: Math.random().toString().split('.').pop() }
+    const data = {
+        userId: Math.random().toString().split('.').pop(),
+        addressId: Math.random().toString().split('.').pop(),
+    }
     const attribute = new StringType({ min: 1, max: 250 })
     attribute.applyValue(data)
     t.is(attribute.error instanceof Exception, true)

@@ -35,7 +35,12 @@ export class MapType extends BaseType {
                         const message = validate(v)
                         if (message) error.addIssue({ path: 'value', message })
                     }
-                } else error.addIssue({ path: 'value', expected: 'object', received: isArray || isNull || isDate || isRegExp })
+                } else
+                    error.addIssue({
+                        path: 'value',
+                        expected: 'object',
+                        received: isArray || isNull || isDate || isRegExp,
+                    })
             } else error.addIssue({ path: 'value', expected: 'object', received: type })
         }
         if (error.hasIssues()) return error

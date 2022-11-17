@@ -30,8 +30,19 @@ export class BooleanType extends BaseType {
                 if (message) error.addIssue({ path: 'value', message })
             }
             if (partitionKey)
-                error.addIssue({ path: 'PartitionKey', expected: `string|number`, received: 'boolean', message: 'Partition key cannot be a boolean' })
-            if (sortKey) error.addIssue({ path: 'SortKey', expected: `string|number`, received: 'boolean', message: 'Sort key cannot be a boolean' })
+                error.addIssue({
+                    path: 'PartitionKey',
+                    expected: `string|number`,
+                    received: 'boolean',
+                    message: 'Partition key cannot be a boolean',
+                })
+            if (sortKey)
+                error.addIssue({
+                    path: 'SortKey',
+                    expected: `string|number`,
+                    received: 'boolean',
+                    message: 'Sort key cannot be a boolean',
+                })
         } else error.addIssue({ path: 'value', expected: 'boolean', received: type })
         if (error.hasIssues()) return error
     }

@@ -28,9 +28,12 @@ export class ListType extends BaseType {
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'array', received: type })
         } else if (Array.isArray(v)) {
-            if (min !== undefined && v!.length < min) error.addIssue({ path: 'size', expected: `${min}<=`, received: v?.length })
-            if (max !== undefined && v!.length > max) error.addIssue({ path: 'size', expected: `<=${max}`, received: v?.length })
-            if (size !== undefined && v!.length !== size) error.addIssue({ path: 'size', expected: size, received: v?.length })
+            if (min !== undefined && v!.length < min)
+                error.addIssue({ path: 'size', expected: `${min}<=`, received: v?.length })
+            if (max !== undefined && v!.length > max)
+                error.addIssue({ path: 'size', expected: `<=${max}`, received: v?.length })
+            if (size !== undefined && v!.length !== size)
+                error.addIssue({ path: 'size', expected: size, received: v?.length })
 
             if (validate) {
                 const message = validate(v)

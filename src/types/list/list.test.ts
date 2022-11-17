@@ -39,7 +39,9 @@ test('input converted to list via transform', (t) => {
 })
 
 test('custom validator fails for a list attribute', (t) => {
-    const attribute = new ListType({ validate: (v) => ((v?.length || 0) % 2 ? 'number of items in the value must be even' : undefined) })
+    const attribute = new ListType({
+        validate: (v) => ((v?.length || 0) % 2 ? 'number of items in the value must be even' : undefined),
+    })
     attribute.value = ['a', 'b', 'c']
     t.is(attribute.error instanceof Exception, true)
     t.deepEqual(attribute.error?.issues, [

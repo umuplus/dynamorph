@@ -42,18 +42,25 @@ export class StringType extends BaseType {
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'string', received: type })
         } else if (type === 'string') {
-            if (min !== undefined && v!.length < min) error.addIssue({ path: 'length', expected: `${min}<=`, received: v?.length })
-            if (max !== undefined && v!.length > max) error.addIssue({ path: 'length', expected: `<=${max}`, received: v?.length })
-            if (length !== undefined && v!.length !== length) error.addIssue({ path: 'length', expected: length, received: v?.length })
-            if (regex !== undefined && !regex.test(v!)) error.addIssue({ path: 'regex', expected: `${regex}`, received: v })
+            if (min !== undefined && v!.length < min)
+                error.addIssue({ path: 'length', expected: `${min}<=`, received: v?.length })
+            if (max !== undefined && v!.length > max)
+                error.addIssue({ path: 'length', expected: `<=${max}`, received: v?.length })
+            if (length !== undefined && v!.length !== length)
+                error.addIssue({ path: 'length', expected: length, received: v?.length })
+            if (regex !== undefined && !regex.test(v!))
+                error.addIssue({ path: 'regex', expected: `${regex}`, received: v })
             if (enumOptions !== undefined && v && !enumOptions.includes(v)) {
-                const expected = enumOptions.length > 3 ? `${enumOptions.slice(0, 3).join('|')}...` : enumOptions.join('|')
+                const expected =
+                    enumOptions.length > 3 ? `${enumOptions.slice(0, 3).join('|')}...` : enumOptions.join('|')
                 error.addIssue({ path: 'value', expected, received: v })
             }
 
             if (mode === StringMode.ULID && !isUlid(v)) error.addIssue({ path: 'mode', expected: 'ulid', received: v })
-            else if (mode === StringMode.EMAIL && !isEmail(v)) error.addIssue({ path: 'mode', expected: 'email', received: v })
-            else if (mode === StringMode.URL && !isUrl(v)) error.addIssue({ path: 'mode', expected: 'url', received: v })
+            else if (mode === StringMode.EMAIL && !isEmail(v))
+                error.addIssue({ path: 'mode', expected: 'email', received: v })
+            else if (mode === StringMode.URL && !isUrl(v))
+                error.addIssue({ path: 'mode', expected: 'url', received: v })
 
             if (validate) {
                 const message = validate(v)
@@ -81,7 +88,8 @@ export class StringType extends BaseType {
 
         let error: Exception | void
         let value: Value = undefined
-        if (this._options.format) error = new Exception({ path: 'format', message: 'must call "applyValue" when there is a format' })
+        if (this._options.format)
+            error = new Exception({ path: 'format', message: 'must call "applyValue" when there is a format' })
         else {
             value = v
             error = this.parse(v)
@@ -95,7 +103,8 @@ export class StringType extends BaseType {
 
         let error: Exception | void
         let value: Value = undefined
-        if (!this._options.format) error = new Exception({ path: 'format', message: 'must assign value when there is no format' })
+        if (!this._options.format)
+            error = new Exception({ path: 'format', message: 'must assign value when there is no format' })
         else if (v) {
             value = applyFormat(this._options.format, v)
             error = this.parse(value)
