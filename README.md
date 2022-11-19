@@ -412,11 +412,51 @@ export interface UpdateTokenOptions extends UpdateTokenBaseType {
 
 | Parameter     | Type                | Required            | Description         |
 | ------------- | ------------------- | ------------------- | ------------------- |
-| length        | number              | false               | Defines length of update token. Default is 4.
+| length        | number              | false               | Defines length of update token and the default is 4
 
 **Usages:**
 
 ```typescript
 const attribute = new UpdateTokenType({ length: 6 })
 attribute.reset()
+```
+
+### Timestamp
+
+This type is for managing timestamps on create, update or delete.
+It doesn't support options like partitionKey, sortKey or ignore.
+
+**Options:**
+
+```typescript
+export enum TimestampMode {
+    ISO_STRING = 'iso',
+    MILLISECONDS = 'ms',
+    SECONDS = 's',
+}
+
+export enum TimestampOn {
+    CREATE = 'c',
+    DELETE = 'd',
+    UPDATE = 'u',
+}
+
+type TimestampBaseType = Omit<Attribute, 'type'>
+
+export interface TimestampOptions extends TimestampBaseType {
+    on: TimestampOn
+    mode: TimestampMode
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| on            | TimestampOn         | true                | Defines when to change the value
+| mode          | TimestampMode       | true                | Defines type of the timestamp
+
+**Usages:**
+
+```typescript
+const attribute = new TimestampType({ on: TimestampOn.CREATE, mode: TimestampMode.ISO_STRING })
+attribute.stamp()
 ```
