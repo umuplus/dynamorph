@@ -97,6 +97,20 @@ test('cannot assign below of allowed range value to string set attribute', (t) =
     t.is(!!attribute.value, false)
 })
 
+test('cannot assign different amount of items to a fixed-sized string set attribute', (t) => {
+    const attribute = new StringSetType({ size: 3 })
+    attribute.value = new Set(['a'])
+    t.deepEqual(attribute.error?.issues, [
+        {
+            expected: 3,
+            message: '"size" is expected to be "3" but received "1"',
+            path: 'size',
+            received: 1,
+        },
+    ])
+    t.is(!!attribute.value, false)
+})
+
 test('cannot assign undefined to required string set attribute', (t) => {
     const attribute = new StringSetType({ required: true })
     attribute.value = undefined

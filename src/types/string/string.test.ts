@@ -51,6 +51,21 @@ test('an email attribute', (t) => {
     t.is(attribute.changed, true)
 })
 
+test('cannot assign an invalid email to an email attribute', (t) => {
+    const attribute = new StringType({ mode: StringMode.EMAIL })
+    attribute.value = 'foo'
+    t.is(attribute.error instanceof Exception, true)
+    t.deepEqual(attribute.error?.issues, [
+        {
+            expected: 'email',
+            message: '"mode" is expected to be "email" but received "foo"',
+            path: 'mode',
+            received: 'foo',
+        },
+    ])
+    t.is(attribute.changed, false)
+})
+
 test('transform can overwrites the value of a string attribute', (t) => {
     const attribute = new StringType({ min: 1, max: 10, required: true, transform: (v) => v?.toUpperCase() })
     attribute.value = 'test1'
@@ -147,6 +162,36 @@ test('cannot assign undefined to required string attribute', (t) => {
             message: '"value" is expected to be "string" but received "undefined"',
             path: 'value',
             received: 'undefined',
+        },
+    ])
+    t.is(attribute.changed, false)
+})
+
+test('cannot assign an invalid url to a url attribute', (t) => {
+    const attribute = new StringType({ mode: StringMode.URL })
+    attribute.value = '123'
+    t.is(attribute.error instanceof Exception, true)
+    t.deepEqual(attribute.error?.issues, [
+        {
+            expected: 'url',
+            message: '"mode" is expected to be "url" but received "123"',
+            path: 'mode',
+            received: '123',
+        },
+    ])
+    t.is(attribute.changed, false)
+})
+
+test('provided regex should match with the value for a string attribute', (t) => {
+    const attribute = new StringType({ regex: /^test/ })
+    attribute.value = 'foo'
+    t.is(attribute.error instanceof Exception, true)
+    t.deepEqual(attribute.error?.issues, [
+        {
+            expected: '/^test/',
+            message: '"regex" is expected to be "/^test/" but received "foo"',
+            path: 'regex',
+            received: 'foo',
         },
     ])
     t.is(attribute.changed, false)

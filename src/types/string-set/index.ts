@@ -24,7 +24,7 @@ export class StringSetType extends BaseType {
     protected parse(v: Value): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const { min, max, length, validate } = this._options
+        const { min, max, size, validate } = this._options
         if (type === 'undefined') {
             if (this._options.required) error.addIssue({ path: 'value', expected: 'Set<string>', received: type })
         } else if (v instanceof Set) {
@@ -32,8 +32,8 @@ export class StringSetType extends BaseType {
                 error.addIssue({ path: 'size', expected: `${min}<=`, received: v?.size })
             if (max !== undefined && v!.size > max)
                 error.addIssue({ path: 'size', expected: `<=${max}`, received: v?.size })
-            if (length !== undefined && v!.size !== length)
-                error.addIssue({ path: 'size', expected: length, received: v?.size })
+            if (size !== undefined && v!.size !== size)
+                error.addIssue({ path: 'size', expected: size, received: v?.size })
 
             if (validate) {
                 const message = validate(v)
