@@ -58,4 +58,8 @@ export abstract class BaseType {
     get ignore(): boolean | undefined {
         return this._options.ignore
     }
+
+    get type(): string {
+        return this._options.type
+    }
 }

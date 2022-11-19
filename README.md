@@ -373,3 +373,38 @@ const attribute = new StringSetType({
 attribute.value = new Set(['a', 'b'])
 attribute.plain() // ['A', 'B']
 ```
+
+### Soft Delete
+
+This type is for marking attributes as deleted.
+It doesn't support options like partitionKey, sortKey or ignore.
+It's default value is **false** and you can assign only a **boolean** value.
+
+**Options:**
+
+```typescript
+type BooleanBaseType = Omit<Attribute, 'type'>
+
+interface BooleanOptions extends BooleanBaseType {
+    validate?: (v: boolean | undefined) => string | undefined
+    transform?: (v: boolean | undefined) => boolean | undefined
+    default?: () => boolean
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| validate      | Function            | false               | Custom validator function. You can return custom error string from your validator
+| transform     | Function            | false               | A custom function to overwrite the value
+| default       | Function            | false               | A custom function to set the default value
+
+**Usages:**
+
+```typescript
+const attribute = new SoftDelete({
+    validate: (v: boolean | undefined) => (!v ? 'value must be true always' : undefined),
+    transform: (v: boolean | undefined) => !!v,
+    default: () => true
+})
+attribute.value = true
+```
