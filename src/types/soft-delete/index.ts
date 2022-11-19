@@ -22,7 +22,6 @@ export class SoftDeleteType extends BaseType {
     protected parse(v: boolean): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const {  } = this._options
         if (type !== 'boolean') error.addIssue({ path: 'value', expected: 'boolean', received: type })
         if (error.hasIssues()) return error
     }

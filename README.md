@@ -383,9 +383,9 @@ It's default value is **false** and you can assign only a **boolean** value.
 **Options:**
 
 ```typescript
-type BooleanBaseType = Omit<Attribute, 'type'>
+type SoftDeleteBaseType = Omit<Attribute, 'type'>
 
-interface BooleanOptions extends BooleanBaseType {}
+interface SoftDeleteOptions extends SoftDeleteBaseType {}
 ```
 
 **Usages:**
@@ -393,4 +393,30 @@ interface BooleanOptions extends BooleanBaseType {}
 ```typescript
 const attribute = new SoftDelete({})
 attribute.value = true
+```
+
+### Update Token
+
+This type is for making atomic changes possible.
+It doesn't support options like partitionKey, sortKey or ignore.
+
+**Options:**
+
+```typescript
+type UpdateTokenBaseType = Omit<Attribute, 'type'>
+
+export interface UpdateTokenOptions extends UpdateTokenBaseType {
+    length?: number
+}
+```
+
+| Parameter     | Type                | Required            | Description         |
+| ------------- | ------------------- | ------------------- | ------------------- |
+| length        | number              | false               | Defines length of update token. Default is 4.
+
+**Usages:**
+
+```typescript
+const attribute = new UpdateTokenType({ length: 6 })
+attribute.reset()
 ```
