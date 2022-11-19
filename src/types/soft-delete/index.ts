@@ -5,9 +5,6 @@ import { silent } from '../../utils/helpers'
 type SoftDeleteBaseType = Omit<Attribute, 'type'>
 
 export interface SoftDeleteOptions extends SoftDeleteBaseType {
-    validate?: (v: boolean) => string | undefined
-    transform?: (v: boolean) => boolean
-    default?: () => boolean
 }
 
 export class SoftDeleteType extends BaseType {
@@ -16,7 +13,6 @@ export class SoftDeleteType extends BaseType {
     constructor(options: SoftDeleteOptions) {
         super({ ...options, type: CustomAttributeType.SOFT_DELETE })
 
-        if (!this._options.default) this._options.default = () => false
         this._options.partitionKey = false
         this._options.sortKey = false
         this._options.ignore = false
@@ -26,19 +22,13 @@ export class SoftDeleteType extends BaseType {
     protected parse(v: boolean): Exception | void {
         const error = new Exception()
         const type = typeof v
-        const { validate } = this._options
-        if (type === 'boolean') {
-            if (validate) {
-                const message = validate(v)
-                if (message) error.addIssue({ path: 'value', message })
-            }
-        } else error.addIssue({ path: 'value', expected: 'boolean', received: type })
+        const {  } = this._options
+        if (type !== 'boolean') error.addIssue({ path: 'value', expected: 'boolean', received: type })
         if (error.hasIssues()) return error
     }
 
     set value(v: boolean) {
-        if (v === undefined) v = this._options.default()
-        if (this._options.transform) v = this._options.transform(v)
+        if (v === undefined) v = false
         const error = this.parse(v)
         if (error) {
             if (!silent()) throw error
