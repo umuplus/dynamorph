@@ -1,5 +1,6 @@
 import test from 'ava'
 import UpdateTokenType from '.'
+import { CustomAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -11,6 +12,7 @@ test('a simple required update token attribute', (t) => {
     t.is(attribute.value.length, 4)
     t.is(attribute.changed, true)
     t.is(attribute.fieldName, 'updateToken')
+    t.is(attribute.type, CustomAttributeType.UPDATE_TOKEN)
 })
 
 test('assign a value to a simple required update token attribute', (t) => {

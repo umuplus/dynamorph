@@ -18,7 +18,7 @@ export class NumberSetType extends BaseType {
     protected _value: Value = undefined
 
     constructor(options: NumberSetOptions) {
-        super({ ...options, type: ComplexAttributeType.LIST })
+        super({ ...options, type: ComplexAttributeType.NUMBER_SET })
     }
 
     protected parse(v: Value): Exception | void {

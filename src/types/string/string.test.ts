@@ -1,5 +1,6 @@
 import test from 'ava'
 import { Exception } from '../../utils/errors'
+import { KeyType } from '../../utils/types'
 import { silent } from '../../utils/helpers'
 import { StringMode, StringType } from '.'
 
@@ -11,6 +12,7 @@ test('a simple string attribute', (t) => {
     t.is(attribute.fieldName, '_ID')
     t.is(attribute.value, 'test1')
     t.is(attribute.changed, true)
+    t.is(attribute.type, KeyType.STRING)
 })
 
 test('a simple string attribute with default', (t) => {

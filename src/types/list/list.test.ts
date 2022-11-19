@@ -1,5 +1,6 @@
 import ListType from '.'
 import test from 'ava'
+import { ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -12,6 +13,7 @@ test('a simple required list attribute', (t) => {
     t.is(attribute.fieldName, 'items')
     t.deepEqual(attribute.value, ['a', 'b', 'c'])
     t.is(attribute.changed, true)
+    t.is(attribute.type, ComplexAttributeType.LIST)
 })
 
 test('a simple list attribute', (t) => {

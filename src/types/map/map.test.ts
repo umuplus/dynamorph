@@ -1,5 +1,6 @@
 import MapType from '.'
 import test from 'ava'
+import { ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -12,6 +13,7 @@ test('a simple required map attribute', (t) => {
     t.is(attribute.fieldName, 'items')
     t.deepEqual(attribute.value, { a: 1, b: 2 })
     t.is(attribute.changed, true)
+    t.is(attribute.type, ComplexAttributeType.MAP)
 })
 
 test('a simple map attribute', (t) => {

@@ -12,7 +12,7 @@ export class UpdateTokenType extends BaseType {
     protected _value: string
 
     constructor(options: UpdateTokenOptions) {
-        super({ ...options, type: CustomAttributeType.SOFT_DELETE })
+        super({ ...options, type: CustomAttributeType.UPDATE_TOKEN })
 
         this._options.partitionKey = false
         this._options.sortKey = false

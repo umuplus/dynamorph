@@ -1,5 +1,6 @@
 import NumberSetType from '.'
 import test from 'ava'
+import { ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -14,6 +15,7 @@ test('a simple required number set attribute', (t) => {
     t.deepEqual(attribute.plain, [1, 2, 3])
     t.is(attribute.changed, true)
     t.is(!!attribute.ignore, false)
+    t.is(attribute.type, ComplexAttributeType.NUMBER_SET)
 })
 
 test('a simple number set attribute', (t) => {

@@ -1,7 +1,8 @@
 import NumberType from '.'
 import test from 'ava'
-import { silent } from '../../utils/helpers'
 import { Exception } from '../../utils/errors'
+import { KeyType } from '../../utils/types'
+import { silent } from '../../utils/helpers'
 
 test.before(() => silent(true))
 
@@ -12,6 +13,7 @@ test('a simple required number attribute', (t) => {
     t.is(attribute.fieldName, 'age')
     t.is(attribute.value, 5)
     t.is(attribute.changed, true)
+    t.is(attribute.type, KeyType.NUMBER)
 })
 
 test('a simple number attribute', (t) => {

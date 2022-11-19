@@ -12,6 +12,7 @@ test('a simple required boolean attribute', (t) => {
     t.is(attribute.value, true)
     t.is(attribute.changed, true)
     t.is(attribute.fieldName, 'isOK')
+    t.is(attribute.type, 'Boolean')
 })
 
 test('a simple boolean attribute', (t) => {

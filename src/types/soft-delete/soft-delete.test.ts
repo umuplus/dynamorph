@@ -1,7 +1,8 @@
 import BooleanType from '.'
 import test from 'ava'
-import { silent } from '../../utils/helpers'
+import { CustomAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
+import { silent } from '../../utils/helpers'
 
 test.before(() => silent(true))
 
@@ -12,6 +13,7 @@ test('a simple required boolean attribute', (t) => {
     t.is(attribute.value, true)
     t.is(attribute.changed, true)
     t.is(attribute.fieldName, 'isDeleted')
+    t.is(attribute.type, CustomAttributeType.SOFT_DELETE)
 })
 
 test('cannot assign an object to a simple boolean attribute', (t) => {

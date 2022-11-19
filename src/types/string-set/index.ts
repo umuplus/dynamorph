@@ -18,7 +18,7 @@ export class StringSetType extends BaseType {
     protected _value: Value = undefined
 
     constructor(options: StringSetOptions) {
-        super({ ...options, type: ComplexAttributeType.LIST })
+        super({ ...options, type: ComplexAttributeType.STRING_SET })
     }
 
     protected parse(v: Value): Exception | void {

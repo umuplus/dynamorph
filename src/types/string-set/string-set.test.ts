@@ -1,5 +1,6 @@
 import StringSetType from '.'
 import test from 'ava'
+import { ComplexAttributeType } from '../../utils/types'
 import { Exception } from '../../utils/errors'
 import { silent } from '../../utils/helpers'
 
@@ -14,6 +15,7 @@ test('a simple required string set attribute', (t) => {
     t.deepEqual(attribute.plain, ['a', 'b', 'c'])
     t.is(attribute.changed, true)
     t.is(!!attribute.ignore, false)
+    t.is(attribute.type, ComplexAttributeType.STRING_SET)
 })
 
 test('a simple string set attribute', (t) => {
